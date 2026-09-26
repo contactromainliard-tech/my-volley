@@ -1,0 +1,279 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Match en cours{% endblock %}
+
+{% block body %}
+<div class="h-screen bg-gray-900 text-white flex flex-col overflow-hidden">
+
+    {# ── HEADER : score des sets ── #}
+    <header class="flex items-center justify-between px-6 py-2 bg-gray-800 border-b border-gray-700">
+
+        <div class="text-center">
+            <p class="text-xs text-gray-400 uppercase tracking-wider">{{ team1.name }}</p>
+            <p class="text-2xl font-bold text-red-400" id="sets-team1">0</p>
+        </div>
+
+        <div class="text-center">
+            <p class="text-xs text-gray-400 uppercase tracking-wider">Manche</p>
+            <p class="text-2xl font-bold text-white" id="manche-number">{{ currentManche.number }}</p>
+        </div>
+
+        <div class="text-center">
+            <p class="text-xs text-gray-400 uppercase tracking-wider">{{ team2.name }}</p>
+            <p class="text-2xl font-bold text-blue-400" id="sets-team2">0</p>
+        </div>
+
+    </header>
+
+
+    {# ── ZONE DE JEU : scores + boutons ── #}
+    <main class="flex-1 flex items-center justify-around px-4">
+
+        {# Équipe 1 #}
+        <div class="flex flex-col items-center gap-4">
+            <p class="text-lg font-semibold text-red-400 uppercase tracking-wide">{{ team1.name }}</p>
+            <p class="text-8xl font-black text-red-400" id="score-team1">{{ currentManche.scoreTeam1 }}</p>
+            <button
+                onclick="openModal(1)"
+                class="w-16 h-16 rounded-full bg-red-500 hover:bg-red-400 text-3xl font-bold shadow-lg transition"
+            >+</button>
+        </div>
+
+
+        {# Indicateur de service #}
+        <div class="flex flex-col items-center gap-2">
+            <span
+                id="service-indicator"
+                class="text-5xl transition-all duration-300"
+                title="Service"
+            >🏐</span>
+            <p class="text-xs text-gray-500" id="service-label">Service</p>
+        </div>
+
+
+        {# Équipe 2 #}
+        <div class="flex flex-col items-center gap-4">
+            <p class="text-lg font-semibold text-blue-400 uppercase tracking-wide">{{ team2.name }}</p>
+            <p class="text-8xl font-black text-blue-400" id="score-team2">{{ currentManche.scoreTeam2 }}</p>
+            <button
+                onclick="openModal(2)"
+                class="w-16 h-16 rounded-full bg-blue-500 hover:bg-blue-400 text-3xl font-bold shadow-lg transition"
+            >+</button>
+        </div>
+
+    </main>
+
+
+    {# ── BARRE D'ACTIONS ── #}
+    <footer class="flex items-center justify-around px-6 py-3 bg-gray-800 border-t border-gray-700">
+
+        <button onclick="rollback()" title="Annuler" class="action-btn">↩</button>
+        <button onclick="redo()" title="Refaire" class="action-btn">↪</button>
+        <button onclick="openSubstitution()" title="Changement" class="action-btn">👤</button>
+        <button onclick="openStats()" title="Statistiques" class="action-btn">📊</button>
+        <button onclick="openMenu()" title="Menu" class="action-btn">⚙️</button>
+
+    </footer>
+
+</div>
+
+
+{# ── MODAL POINT ── #}
+<div
+    id="modal-point"
+    class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+>
+    <div class="bg-gray-800 rounded-2xl p-6 w-80 shadow-2xl">
+
+        <h2 class="text-lg font-bold mb-4 text-center" id="modal-title">Type de point</h2>
+
+        {# Types de point #}
+        <div class="grid grid-cols-2 gap-3 mb-4" id="step-type">
+            <button onclick="selectType('ace')"      class="point-type-btn">🎯 Ace</button>
+            <button onclick="selectType('attack')"   class="point-type-btn">⚡ Attaque</button>
+            <button onclick="selectType('block')"    class="point-type-btn">🛡️ Block</button>
+            <button onclick="selectType('fault')"    class="point-type-btn">❌ Faute</button>
+        </div>
+
+        {# Sélection joueur #}
+        <div id="step-player" class="hidden">
+            <p class="text-sm text-gray-400 mb-3 text-center">Qui a marqué ?</p>
+            <div id="players-list" class="grid grid-cols-2 gap-2"></div>
+        </div>
+
+        <button
+            onclick="closeModal()"
+            class="mt-4 w-full py-2 rounded-xl bg-gray-700 hover:bg-gray-600 text-sm text-gray-300 transition"
+        >Annuler</button>
+
+    </div>
+</div>
+
+
+{# ── LAYER STATS ── #}
+<div
+    id="layer-stats"
+    class="hidden fixed inset-0 bg-black/80 z-50 flex items-end"
+>
+    <div class="bg-gray-800 w-full rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto">
+
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-bold">Statistiques</h2>
+            <button onclick="closeStats()" class="text-gray-400 hover:text-white text-2xl">×</button>
+        </div>
+
+        <div id="stats-content">
+            <p class="text-gray-500 text-center py-8">Chargement...</p>
+        </div>
+
+    </div>
+</div>
+
+
+<style>
+    .action-btn {
+        @apply w-12 h-12 rounded-full bg-gray-700 hover:bg-gray-600 text-xl flex items-center justify-center transition;
+    }
+    .point-type-btn {
+        @apply py-4 rounded-xl bg-gray-700 hover:bg-green-600 font-semibold transition text-sm;
+    }
+</style>
+
+<script>
+    const gameId  = {{ game.id }};
+    let mancheId = {{ currentManche.id }};
+    const team1Id = {{ team1.id }};
+    const team2Id = {{ team2.id }};
+
+    // Joueurs sur le terrain par équipe (injectés depuis Twig)
+    const courtPlayers = {
+        1: [
+            {% for gp in team1.gamePlayers %}
+                {% if gp.isOnCourt %}
+                    { id: {{ gp.player.id }}, name: "{{ gp.player.name }}" },
+                {% endif %}
+            {% endfor %}
+        ],
+        2: [
+            {% for gp in team2.gamePlayers %}
+                {% if gp.isOnCourt %}
+                    { id: {{ gp.player.id }}, name: "{{ gp.player.name }}" },
+                {% endif %}
+            {% endfor %}
+        ]
+    };
+
+    let currentTeam = null;
+    let currentType = null;
+    let serviceTeam = null; // sera défini au démarrage
+
+    // ── Modal ──
+    function openModal(teamNumber) {
+        currentTeam = teamNumber;
+        currentType = null;
+        document.getElementById('step-type').classList.remove('hidden');
+        document.getElementById('step-player').classList.add('hidden');
+        document.getElementById('modal-title').textContent = 'Type de point';
+        document.getElementById('modal-point').classList.remove('hidden');
+    }
+
+    function closeModal() {
+        document.getElementById('modal-point').classList.add('hidden');
+    }
+
+    function selectType(type) {
+        currentType = type;
+
+        if (type === 'fault') {
+            submitPoint(null);
+            return;
+        }
+
+        // Affiche les joueurs sur le terrain
+        const players = courtPlayers[currentTeam];
+        const list = document.getElementById('players-list');
+        list.innerHTML = '';
+
+        players.forEach(p => {
+            const btn = document.createElement('button');
+            btn.className = 'py-3 rounded-xl bg-gray-700 hover:bg-green-600 text-sm font-semibold transition';
+            btn.textContent = p.name;
+            btn.onclick = () => submitPoint(p.id);
+            list.appendChild(btn);
+        });
+
+        document.getElementById('step-type').classList.add('hidden');
+        document.getElementById('step-player').classList.remove('hidden');
+        document.getElementById('modal-title').textContent = 'Joueur';
+    }
+
+        function submitPoint(playerId) {
+        fetch(`/game/${gameId}/add-point`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                manche_id: mancheId,
+                team_id:   currentTeam === 1 ? team1Id : team2Id,
+                player_id: playerId,
+                type:      currentType
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+            closeModal();
+            updateScore(data);
+        });
+    }
+
+        function updateScore(data) {
+            mancheId = data.manche_id;
+    document.getElementById('score-team1').textContent = data.score_team1;
+    document.getElementById('score-team2').textContent = data.score_team2;
+    document.getElementById('sets-team1').textContent  = data.sets_team1;
+    document.getElementById('sets-team2').textContent  = data.sets_team2;
+    document.getElementById('manche-number').textContent = data.manche_number;
+        updateService(data.serviceTeam);
+    }
+
+    function updateService(teamId) {
+        const indicator = document.getElementById('service-indicator');
+        if (teamId === team1Id) {
+            indicator.style.filter = 'sepia(1) saturate(5) hue-rotate(310deg)'; // rouge
+        } else {
+            indicator.style.filter = 'sepia(1) saturate(5) hue-rotate(180deg)'; // bleu
+        }
+    }
+
+    // ── Rollback ──
+    function rollback() {
+        fetch(`/game/${gameId}/rollback`, { method: 'POST' })
+        .then(r => r.json())
+        .then(data => updateScore(data));
+    }
+
+    function redo() {
+        // À implémenter
+    }
+
+    // ── Stats ──
+    function openStats() {
+        document.getElementById('layer-stats').classList.remove('hidden');
+        fetch(`/game/${gameId}/stats`)
+        .then(r => r.json())
+        .then(data => renderStats(data));
+    }
+
+    function closeStats() {
+        document.getElementById('layer-stats').classList.add('hidden');
+    }
+
+    function renderStats(data) {
+        // À implémenter
+    }
+
+    function openSubstitution() { }
+    function openMenu() { }
+
+</script>
+
+{% endblock %}

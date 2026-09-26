@@ -15,14 +15,14 @@ class Point
 
     #[ORM\ManyToOne(inversedBy: 'points')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Set $set = null;
+    private ?Manche $manche = null;
 
     #[ORM\ManyToOne(inversedBy: 'points')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Team $team = null;
 
     #[ORM\ManyToOne(inversedBy: 'points')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: true)]
     private ?Player $player = null;
 
     #[ORM\Column(length: 255)]
@@ -32,9 +32,9 @@ class Point
     private ?int $sequence_number = null;
 
     #[ORM\Column]
-    private ?bool $is_cancelled = null;
+    private ?bool $is_cancelled = false;
 
-    #[ORM\Column]
+    #[ORM\Column(nullable: true)]
     private ?\DateTime $cancelled_at = null;
 
     #[ORM\Column]
@@ -52,14 +52,14 @@ class Point
         return $this;
     }
 
-    public function getSet(): ?Set
+    public function getManche(): ?Manche
     {
-        return $this->set;
+        return $this->manche;
     }
 
-    public function setSet(?Set $set): static
+    public function setManche(?Manche $manche): static
     {
-        $this->set = $set;
+        $this->manche = $manche;
 
         return $this;
     }

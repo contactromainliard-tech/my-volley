@@ -2,20 +2,20 @@
 
 namespace App\Entity;
 
-use App\Repository\SetRepository;
+use App\Repository\MancheRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: SetRepository::class)]
-class Set
+#[ORM\Entity(repositoryClass: MancheRepository::class)]
+class Manche
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(inversedBy: 'sets')]
+    #[ORM\ManyToOne(inversedBy: 'manches')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Game $game = null;
 
@@ -28,8 +28,9 @@ class Set
     #[ORM\Column]
     private ?int $score_team2 = null;
 
-    #[ORM\ManyToOne(inversedBy: 'sets')]
-    private ?Team $winner_team_id = null;
+    #[ORM\ManyToOne(inversedBy: 'manches')]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Team $winnerTeam = null;
 
     #[ORM\Column(length: 255)]
     private ?string $status = null;
@@ -37,7 +38,7 @@ class Set
     /**
      * @var Collection<int, Point>
      */
-    #[ORM\OneToMany(targetEntity: Point::class, mappedBy: 'set', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: Point::class, mappedBy: 'manche', orphanRemoval: true)]
     private Collection $points;
 
     public function __construct()
@@ -105,14 +106,14 @@ class Set
         return $this;
     }
 
-    public function getWinnerTeamId(): ?Team
+    public function getWinnerTeam(): ?Team
     {
-        return $this->winner_team_id;
+        return $this->winnerTeam;
     }
 
-    public function setWinnerTeamId(?Team $winner_team_id): static
+    public function setWinnerTeam(?Team $winnerTeam): static
     {
-        $this->winner_team_id = $winner_team_id;
+        $this->winnerTeam = $winnerTeam;
 
         return $this;
     }
@@ -141,7 +142,7 @@ class Set
     {
         if (!$this->points->contains($point)) {
             $this->points->add($point);
-            $point->setSet($this);
+            $point->setManche($this);
         }
 
         return $this;
@@ -151,8 +152,8 @@ class Set
     {
         if ($this->points->removeElement($point)) {
             // set the owning side to null (unless already changed)
-            if ($point->getSet() === $this) {
-                $point->setSet(null);
+            if ($point->getManche() === $this) {
+                $point->setManche(null);
             }
         }
 

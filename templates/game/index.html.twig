@@ -1,0 +1,549 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau match - Stats{% endblock %}
+
+{% block body %}
+
+<div class="min-h-screen bg-gray-100">
+
+    {# ========================================================= #}
+    {# HEADER                                                      #}
+    {# ========================================================= #}
+
+    <header class="bg-white border-b border-gray-200">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+
+            <div class="flex items-center justify-between">
+
+                <div class="flex items-center gap-3">
+
+                    <div class="w-10 h-10 rounded-full bg-green-400 flex items-center justify-center">
+                        <span class="text-xl">🏐</span>
+                    </div>
+
+                    <div>
+                        <h1 class="font-bold text-xl leading-none">
+                            <span class="text-green-500">Stats</span>
+                        </h1>
+
+                        <p class="text-xs text-gray-500">
+                            Volleyball statistics
+                        </p>
+                    </div>
+
+                </div>
+
+                <button
+                    type="button"
+                    class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center
+                           hover:bg-gray-200 transition"
+                >
+                    ⚙️
+                </button>
+
+            </div>
+
+        </div>
+    </header>
+
+
+    {# ========================================================= #}
+    {# CONTENU PRINCIPAL                                           #}
+    {# ========================================================= #}
+
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+
+        {# TITRE #}
+
+        <div class="mb-6 lg:mb-8">
+
+            <a
+                href="#"
+                class="text-sm text-gray-500 hover:text-gray-800 transition"
+            >
+                ← Retour
+            </a>
+
+            <h2 class="text-3xl lg:text-4xl font-bold mt-3">
+                Nouveau match
+            </h2>
+
+            <p class="text-gray-500 mt-1">
+                Configure les équipes et leurs joueurs.
+            </p>
+
+        </div>
+
+
+        {# ========================================================= #}
+        {# FORMULAIRE                                                 #}
+        {# ========================================================= #}
+
+        <form
+            method="post"
+            action="{{ path('app_game_create') }}"
+        >
+
+            {# ===================================================== #}
+            {# NOM DU MATCH                                             #}
+            {# ===================================================== #}
+
+            <section class="bg-white rounded-2xl border border-gray-200 p-5 lg:p-6 mb-6">
+
+                <label
+                    for="match_name"
+                    class="block font-semibold mb-2"
+                >
+                    Nom du match
+                    <span class="text-gray-400 font-normal">
+                        (optionnel)
+                    </span>
+                </label>
+
+                <input
+                    type="text"
+                    id="match_name"
+                    name="match_name"
+                    placeholder="Ex : Championnat - Journée 1"
+                    class="w-full px-4 py-3 rounded-xl border border-gray-300
+                           focus:outline-none focus:ring-2 focus:ring-green-400
+                           focus:border-green-400 transition"
+                >
+
+            </section>
+
+
+            {# ===================================================== #}
+            {# ÉQUIPES                                                   #}
+            {# ===================================================== #}
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+
+                {# ================================================= #}
+                {# ÉQUIPE 1                                             #}
+                {# ================================================= #}
+
+                <section class="bg-green-50 rounded-2xl border border-green-200 p-5 lg:p-6">
+
+                    {# En-tête #}
+
+                    <div class="flex items-center gap-3 mb-6">
+
+                        <div
+                            class="w-10 h-10 rounded-full bg-green-400
+                                   flex items-center justify-center font-bold"
+                        >
+                            1
+                        </div>
+
+                        <div>
+                            <p class="text-sm text-green-700 font-medium">
+                                Équipe 1
+                            </p>
+
+                            <h3 class="text-xl font-bold">
+                                Notre équipe
+                            </h3>
+                        </div>
+
+                    </div>
+
+
+                    {# Nom de l'équipe #}
+
+                    <div class="mb-6">
+
+                        <label
+                            for="team1_name"
+                            class="block text-sm font-semibold mb-2"
+                        >
+                            Nom de l'équipe
+                        </label>
+
+                        <input
+                            type="text"
+                            id="team1_name"
+                            name="team1_name"
+                            placeholder="Ex : MVB DMA"
+                            required
+                            class="w-full px-4 py-3 rounded-xl bg-white border border-gray-300
+                                   focus:outline-none focus:ring-2 focus:ring-green-400
+                                   focus:border-green-400 transition"
+                        >
+
+                    </div>
+
+
+                    {# Joueurs #}
+
+                    <div>
+
+                        <div class="flex items-center justify-between mb-3">
+
+                            <label class="text-sm font-semibold">
+                                Joueurs
+                            </label>
+
+                            <span
+                                id="team1-count"
+                                class="text-sm text-gray-500"
+                            >
+                                0 joueur
+                            </span>
+
+                        </div>
+
+
+                        {# Liste des joueurs #}
+
+                        <div
+                            id="team1-players"
+                            class="space-y-3"
+                        >
+
+                            <div class="player-input flex gap-2">
+
+                                <input
+                                    type="text"
+                                    name="team1_players[]"
+                                    placeholder="Nom et prénom du joueur"
+                                    class="flex-1 min-w-0 px-4 py-3 rounded-xl bg-white
+                                           border border-gray-300
+                                           focus:outline-none focus:ring-2
+                                           focus:ring-green-400
+                                           focus:border-green-400 transition"
+                                >
+
+                                <button
+                                    type="button"
+                                    class="remove-player hidden shrink-0 w-12
+                                           rounded-xl bg-red-100 text-red-600
+                                           hover:bg-red-200 transition"
+                                >
+                                    ×
+                                </button>
+
+                            </div>
+
+                        </div>
+
+
+                        {# Ajouter un joueur #}
+
+                        <button
+                            type="button"
+                            id="add-team1-player"
+                            class="mt-4 w-full py-3 rounded-xl
+                                   border-2 border-dashed border-green-300
+                                   text-green-700 font-semibold
+                                   hover:bg-green-100 transition"
+                        >
+                            + Ajouter un joueur
+                        </button>
+
+                    </div>
+
+                </section>
+
+
+                {# ================================================= #}
+                {# ÉQUIPE 2                                             #}
+                {# ================================================= #}
+
+                <section class="bg-white rounded-2xl border border-gray-200 p-5 lg:p-6">
+
+                    {# En-tête #}
+
+                    <div class="flex items-center gap-3 mb-6">
+
+                        <div
+                            class="w-10 h-10 rounded-full bg-gray-200
+                                   flex items-center justify-center font-bold"
+                        >
+                            2
+                        </div>
+
+                        <div>
+                            <p class="text-sm text-gray-500 font-medium">
+                                Équipe 2
+                            </p>
+
+                            <h3 class="text-xl font-bold">
+                                Adversaire
+                            </h3>
+                        </div>
+
+                    </div>
+
+
+                    {# Nom de l'équipe #}
+
+                    <div class="mb-6">
+
+                        <label
+                            for="team2_name"
+                            class="block text-sm font-semibold mb-2"
+                        >
+                            Nom de l'équipe
+                        </label>
+
+                        <input
+                            type="text"
+                            id="team2_name"
+                            name="team2_name"
+                            placeholder="Ex : La Roche-sur-Yon"
+                            required
+                            class="w-full px-4 py-3 rounded-xl border border-gray-300
+                                   focus:outline-none focus:ring-2 focus:ring-green-400
+                                   focus:border-green-400 transition"
+                        >
+
+                    </div>
+
+
+                    {# Joueurs #}
+
+                    <div>
+
+                        <div class="flex items-center justify-between mb-3">
+
+                            <label class="text-sm font-semibold">
+                                Joueurs
+                            </label>
+
+                            <span
+                                id="team2-count"
+                                class="text-sm text-gray-500"
+                            >
+                                0 joueur
+                            </span>
+
+                        </div>
+
+
+                        {# Liste des joueurs #}
+
+                        <div
+                            id="team2-players"
+                            class="space-y-3"
+                        >
+
+                            <div class="player-input flex gap-2">
+
+                                <input
+                                    type="text"
+                                    name="team2_players[]"
+                                    placeholder="Nom et prénom du joueur"
+                                    class="flex-1 min-w-0 px-4 py-3 rounded-xl
+                                           border border-gray-300
+                                           focus:outline-none focus:ring-2
+                                           focus:ring-green-400
+                                           focus:border-green-400 transition"
+                                >
+
+                                <button
+                                    type="button"
+                                    class="remove-player hidden shrink-0 w-12
+                                           rounded-xl bg-red-100 text-red-600
+                                           hover:bg-red-200 transition"
+                                >
+                                    ×
+                                </button>
+
+                            </div>
+
+                        </div>
+
+
+                        {# Ajouter un joueur #}
+
+                        <button
+                            type="button"
+                            id="add-team2-player"
+                            class="mt-4 w-full py-3 rounded-xl
+                                   border-2 border-dashed border-gray-300
+                                   text-gray-600 font-semibold
+                                   hover:bg-gray-100 transition"
+                        >
+                            + Ajouter un joueur
+                        </button>
+
+                    </div>
+
+                </section>
+
+            </div>
+
+
+            {# ========================================================= #}
+            {# BOUTON CRÉER                                               #}
+            {# ========================================================= #}
+
+            <div class="mt-6 flex justify-end">
+
+                <button
+                    type="submit"
+                    class="w-full sm:w-auto sm:min-w-[280px]
+                           py-4 px-8 rounded-2xl
+                           bg-green-400 hover:bg-green-300
+                           active:bg-green-500
+                           transition font-bold text-lg
+                           shadow-lg hover:shadow-xl"
+                >
+                    Créer le match →
+                </button>
+
+            </div>
+
+        </form>
+
+    </main>
+
+</div>
+
+
+{# ========================================================= #}
+{# JAVASCRIPT                                                  #}
+{# ========================================================= #}
+
+<script>
+
+    /**
+     * Initialise la gestion des joueurs
+     * pour une équipe.
+     */
+    function setupPlayerList(teamNumber) {
+
+        const container =
+            document.getElementById(`team${teamNumber}-players`);
+
+        const addButton =
+            document.getElementById(`add-team${teamNumber}-player`);
+
+        const counter =
+            document.getElementById(`team${teamNumber}-count`);
+
+
+        /**
+         * Met à jour le compteur de joueurs.
+         */
+        function updateCounter() {
+
+            const inputs = container.querySelectorAll('input');
+
+            const count = Array.from(inputs)
+                .filter(input => input.value.trim() !== '')
+                .length;
+
+            counter.textContent =
+                `${count} joueur${count > 1 ? 's' : ''}`;
+        }
+
+
+        /**
+         * Ajoute un nouveau champ joueur.
+         */
+        function addPlayer() {
+
+            const wrapper =
+                document.createElement('div');
+
+            wrapper.className =
+                'player-input flex gap-2';
+
+
+            wrapper.innerHTML = `
+
+                <input
+                    type="text"
+                    name="team${teamNumber}_players[]"
+                    placeholder="Nom et prénom du joueur"
+                    class="flex-1 min-w-0 px-4 py-3 rounded-xl
+                           border border-gray-300
+                           focus:outline-none focus:ring-2
+                           focus:ring-green-400
+                           focus:border-green-400 transition"
+                >
+
+                <button
+                    type="button"
+                    class="remove-player shrink-0 w-12
+                           rounded-xl bg-red-100 text-red-600
+                           hover:bg-red-200 transition"
+                >
+                    ×
+                </button>
+
+            `;
+
+
+            container.appendChild(wrapper);
+
+
+            const input =
+                wrapper.querySelector('input');
+
+
+            const removeButton =
+                wrapper.querySelector('.remove-player');
+
+
+            /**
+             * Suppression du joueur.
+             */
+            removeButton.addEventListener('click', () => {
+
+                wrapper.remove();
+
+                updateCounter();
+
+            });
+
+
+            /**
+             * Mise à jour du compteur.
+             */
+            input.addEventListener(
+                'input',
+                updateCounter
+            );
+
+
+            input.focus();
+
+            updateCounter();
+        }
+
+
+        /**
+         * Bouton "Ajouter un joueur".
+         */
+        addButton.addEventListener(
+            'click',
+            addPlayer
+        );
+
+
+        /**
+         * Écoute les champs déjà présents.
+         */
+        container.addEventListener(
+            'input',
+            updateCounter
+        );
+
+
+        updateCounter();
+    }
+
+
+    // Initialisation équipe 1
+    setupPlayerList(1);
+
+    // Initialisation équipe 2
+    setupPlayerList(2);
+
+</script>
+
+{% endblock %}

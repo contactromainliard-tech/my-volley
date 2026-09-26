@@ -28,7 +28,7 @@ class Game
     private Collection $teams;
 
     #[ORM\ManyToOne(inversedBy: 'games')]
-    private ?Team $winner_team_id = null;
+    private ?Team $winnerTeam = null;
 
     /**
      * @var Collection<int, GamePlayer>
@@ -37,16 +37,16 @@ class Game
     private Collection $gamePlayers;
 
     /**
-     * @var Collection<int, Set>
+     * @var Collection<int, Manche>
      */
-    #[ORM\OneToMany(targetEntity: Set::class, mappedBy: 'game', orphanRemoval: true)]
-    private Collection $sets;
+    #[ORM\OneToMany(targetEntity: Manche::class, mappedBy: 'game', orphanRemoval: true)]
+    private Collection $manches;
 
     public function __construct()
     {
         $this->teams = new ArrayCollection();
         $this->gamePlayers = new ArrayCollection();
-        $this->sets = new ArrayCollection();
+        $this->manches = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -115,14 +115,14 @@ class Game
         return $this;
     }
 
-    public function getWinnerTeamId(): ?Team
+    public function getWinnerTeam(): ?Team
     {
-        return $this->winner_team_id;
+        return $this->winnerTeam;
     }
 
-    public function setWinnerTeamId(?Team $winner_team_id): static
+    public function setWinnerTeam(?Team $winnerTeam): static
     {
-        $this->winner_team_id = $winner_team_id;
+        $this->winnerTeam = $winnerTeam;
 
         return $this;
     }
@@ -158,26 +158,26 @@ class Game
     }
 
     /**
-     * @return Collection<int, Set>
+     * @return Collection<int, Manche>
      */
-    public function getSets(): Collection
+    public function getManches(): Collection
     {
-        return $this->sets;
+        return $this->manches;
     }
 
-    public function addSet(Set $set): static
+    public function addManche(Manche $set): static
     {
-        if (!$this->sets->contains($set)) {
-            $this->sets->add($set);
+        if (!$this->manches->contains($set)) {
+            $this->manches->add($set);
             $set->setGame($this);
         }
 
         return $this;
     }
 
-    public function removeSet(Set $set): static
+    public function removeManche(Manche $set): static
     {
-        if ($this->sets->removeElement($set)) {
+        if ($this->manches->removeElement($set)) {
             // set the owning side to null (unless already changed)
             if ($set->getGame() === $this) {
                 $set->setGame(null);

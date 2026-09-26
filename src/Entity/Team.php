@@ -25,32 +25,45 @@ class Team
     /**
      * @var Collection<int, Game>
      */
-    #[ORM\OneToMany(targetEntity: Game::class, mappedBy: 'winner_team_id')]
+    #[ORM\OneToMany(
+        targetEntity: Game::class,
+        mappedBy: 'winnerTeam'
+    )]
     private Collection $games;
 
     /**
      * @var Collection<int, GamePlayer>
      */
-    #[ORM\OneToMany(targetEntity: GamePlayer::class, mappedBy: 'team')]
+    #[ORM\OneToMany(
+        targetEntity: GamePlayer::class,
+        mappedBy: 'team'
+    )]
     private Collection $gamePlayers;
 
     /**
-     * @var Collection<int, Set>
+     * @var Collection<int, Manche>
      */
-    #[ORM\OneToMany(targetEntity: Set::class, mappedBy: 'winner_team_id')]
-    private Collection $sets;
+    #[ORM\OneToMany(
+        targetEntity: Manche::class,
+        mappedBy: 'winnerTeam'
+    )]
+    private Collection $manches;
 
     /**
      * @var Collection<int, Point>
      */
-    #[ORM\OneToMany(targetEntity: Point::class, mappedBy: 'team', orphanRemoval: true)]
+    #[ORM\OneToMany(
+        targetEntity: Point::class,
+        mappedBy: 'team',
+        orphanRemoval: true
+    )]
     private Collection $points;
 
     public function __construct()
     {
         $this->games = new ArrayCollection();
         $this->gamePlayers = new ArrayCollection();
-        $this->sets = new ArrayCollection();
+        $this->manches = new ArrayCollection();
         $this->points = new ArrayCollection();
     }
 
@@ -102,7 +115,7 @@ class Team
     {
         if (!$this->games->contains($game)) {
             $this->games->add($game);
-            $game->setWinnerTeamId($this);
+            $game->setWinnerTeam($this);
         }
 
         return $this;
@@ -111,9 +124,8 @@ class Team
     public function removeGame(Game $game): static
     {
         if ($this->games->removeElement($game)) {
-            // set the owning side to null (unless already changed)
-            if ($game->getWinnerTeamId() === $this) {
-                $game->setWinnerTeamId(null);
+            if ($game->getWinnerTeam() === $this) {
+                $game->setWinnerTeam(null);
             }
         }
 
@@ -141,7 +153,6 @@ class Team
     public function removeGamePlayer(GamePlayer $gamePlayer): static
     {
         if ($this->gamePlayers->removeElement($gamePlayer)) {
-            // set the owning side to null (unless already changed)
             if ($gamePlayer->getTeam() === $this) {
                 $gamePlayer->setTeam(null);
             }
@@ -151,29 +162,28 @@ class Team
     }
 
     /**
-     * @return Collection<int, Set>
+     * @return Collection<int, Manche>
      */
-    public function getSets(): Collection
+    public function getManches(): Collection
     {
-        return $this->sets;
+        return $this->manches;
     }
 
-    public function addSet(Set $set): static
+    public function addManche(Manche $manche): static
     {
-        if (!$this->sets->contains($set)) {
-            $this->sets->add($set);
-            $set->setWinnerTeamId($this);
+        if (!$this->manches->contains($manche)) {
+            $this->manches->add($manche);
+            $manche->setWinnerTeam($this);
         }
 
         return $this;
     }
 
-    public function removeSet(Set $set): static
+    public function removeManche(Manche $manche): static
     {
-        if ($this->sets->removeElement($set)) {
-            // set the owning side to null (unless already changed)
-            if ($set->getWinnerTeamId() === $this) {
-                $set->setWinnerTeamId(null);
+        if ($this->manches->removeElement($manche)) {
+            if ($manche->getWinnerTeam() === $this) {
+                $manche->setWinnerTeam(null);
             }
         }
 
@@ -201,7 +211,6 @@ class Team
     public function removePoint(Point $point): static
     {
         if ($this->points->removeElement($point)) {
-            // set the owning side to null (unless already changed)
             if ($point->getTeam() === $this) {
                 $point->setTeam(null);
             }
