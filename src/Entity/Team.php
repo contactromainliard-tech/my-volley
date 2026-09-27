@@ -59,12 +59,19 @@ class Team
     )]
     private Collection $points;
 
+    /**
+     * @var Collection<int, Game>
+     */
+    #[ORM\OneToMany(targetEntity: Game::class, mappedBy: 'serviceTeam', orphanRemoval: true)]
+    private Collection $games_service;
+
     public function __construct()
     {
         $this->games = new ArrayCollection();
         $this->gamePlayers = new ArrayCollection();
         $this->manches = new ArrayCollection();
         $this->points = new ArrayCollection();
+        $this->games_service = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -213,6 +220,36 @@ class Team
         if ($this->points->removeElement($point)) {
             if ($point->getTeam() === $this) {
                 $point->setTeam(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Game>
+     */
+    public function getGamesService(): Collection
+    {
+        return $this->games_service;
+    }
+
+    public function addGamesService(Game $gamesService): static
+    {
+        if (!$this->games_service->contains($gamesService)) {
+            $this->games_service->add($gamesService);
+            $gamesService->setServiceTeam($this);
+        }
+
+        return $this;
+    }
+
+    public function removeGamesService(Game $gamesService): static
+    {
+        if ($this->games_service->removeElement($gamesService)) {
+            // set the owning side to null (unless already changed)
+            if ($gamesService->getServiceTeam() === $this) {
+                $gamesService->setServiceTeam(null);
             }
         }
 

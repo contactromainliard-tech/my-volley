@@ -42,6 +42,10 @@ class Game
     #[ORM\OneToMany(targetEntity: Manche::class, mappedBy: 'game', orphanRemoval: true)]
     private Collection $manches;
 
+    #[ORM\ManyToOne(inversedBy: 'games_service')]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Team $serviceTeam = null;
+
     public function __construct()
     {
         $this->teams = new ArrayCollection();
@@ -183,6 +187,18 @@ class Game
                 $set->setGame(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getServiceTeam(): ?Team
+    {
+        return $this->serviceTeam;
+    }
+
+    public function setServiceTeam(?Team $serviceTeam): static
+    {
+        $this->serviceTeam = $serviceTeam;
 
         return $this;
     }

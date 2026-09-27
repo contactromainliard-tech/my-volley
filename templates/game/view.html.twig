@@ -42,13 +42,15 @@
 
         {# Indicateur de service #}
         <div class="flex flex-col items-center gap-2">
-            <span
-                id="service-indicator"
-                class="text-5xl transition-all duration-300"
-                title="Service"
-            >🏐</span>
-            <p class="text-xs text-gray-500" id="service-label">Service</p>
-        </div>
+
+    <div class="flex items-center gap-3">
+        <span id="arrow-left" class="text-3xl text-red-400 transition-all duration-300 opacity-0">◀</span>
+        <span id="service-indicator" class="text-5xl transition-all duration-300" title="Service">🏐</span>
+        <span id="arrow-right" class="text-3xl text-blue-400 transition-all duration-300 opacity-0">▶</span>
+    </div>
+
+    <p class="text-xs text-gray-500">Service</p>
+</div>
 
 
         {# Équipe 2 #}
@@ -78,6 +80,32 @@
 </div>
 
 
+{# ── MODAL SERVICE INITIAL ── #}
+<div
+    id="modal-service"
+    class="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+>
+    <div class="bg-gray-800 rounded-2xl p-6 w-80 shadow-2xl">
+
+        <h2 class="text-lg font-bold mb-2 text-center">Qui commence le service ?</h2>
+        <p class="text-gray-400 text-sm text-center mb-6">Sélectionne l'équipe qui sert en premier</p>
+
+        <div class="flex flex-col gap-3">
+            <button
+                onclick="setService({{ team1.id }})"
+                class="py-4 rounded-xl bg-red-500 hover:bg-red-400 font-bold text-lg transition"
+            >{{ team1.name }}</button>
+
+            <button
+                onclick="setService({{ team2.id }})"
+                class="py-4 rounded-xl bg-blue-500 hover:bg-blue-400 font-bold text-lg transition"
+            >{{ team2.name }}</button>
+        </div>
+
+    </div>
+</div>
+
+
 {# ── MODAL POINT ── #}
 <div
     id="modal-point"
@@ -87,7 +115,6 @@
 
         <h2 class="text-lg font-bold mb-4 text-center" id="modal-title">Type de point</h2>
 
-        {# Types de point #}
         <div class="grid grid-cols-2 gap-3 mb-4" id="step-type">
             <button onclick="selectType('ace')"      class="point-type-btn">🎯 Ace</button>
             <button onclick="selectType('attack')"   class="point-type-btn">⚡ Attaque</button>
@@ -95,7 +122,6 @@
             <button onclick="selectType('fault')"    class="point-type-btn">❌ Faute</button>
         </div>
 
-        {# Sélection joueur #}
         <div id="step-player" class="hidden">
             <p class="text-sm text-gray-400 mb-3 text-center">Qui a marqué ?</p>
             <div id="players-list" class="grid grid-cols-2 gap-2"></div>
@@ -141,11 +167,11 @@
 
 <script>
     const gameId  = {{ game.id }};
-    let mancheId = {{ currentManche.id }};
+    let mancheId  = {{ currentManche.id }};
     const team1Id = {{ team1.id }};
     const team2Id = {{ team2.id }};
+    let serviceTeam = null;
 
-    // Joueurs sur le terrain par équipe (injectés depuis Twig)
     const courtPlayers = {
         1: [
             {% for gp in team1.gamePlayers %}
@@ -165,9 +191,48 @@
 
     let currentTeam = null;
     let currentType = null;
-    let serviceTeam = null; // sera défini au démarrage
 
-    // ── Modal ──
+    // ── Service ──
+    function setService(teamId) {
+        fetch('/game/service', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                game_id: gameId,
+                service_team_id: teamId
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+            serviceTeam = data.service_team_id;
+            updateService(serviceTeam);
+            document.getElementById('modal-service').classList.add('hidden');
+        });
+    }
+
+    function updateService(teamId) {
+        const indicator  = document.getElementById('service-indicator');
+        const arrowLeft  = document.getElementById('arrow-left');
+        const arrowRight = document.getElementById('arrow-right');
+
+        if (teamId === team1Id) {
+            // Équipe 1 (rouge) a le service
+            indicator.style.filter  = 'sepia(1) saturate(5) hue-rotate(310deg)';
+            arrowLeft.style.opacity  = '1';
+            arrowRight.style.opacity = '0';
+        } else if (teamId === team2Id) {
+            // Équipe 2 (bleu) a le service
+            indicator.style.filter  = 'sepia(1) saturate(5) hue-rotate(180deg)';
+            arrowLeft.style.opacity  = '0';
+            arrowRight.style.opacity = '1';
+        } else {
+            indicator.style.filter  = 'none';
+            arrowLeft.style.opacity  = '0';
+            arrowRight.style.opacity = '0';
+        }
+    }
+
+    // ── Modal point ──
     function openModal(teamNumber) {
         currentTeam = teamNumber;
         currentType = null;
@@ -189,7 +254,6 @@
             return;
         }
 
-        // Affiche les joueurs sur le terrain
         const players = courtPlayers[currentTeam];
         const list = document.getElementById('players-list');
         list.innerHTML = '';
@@ -207,7 +271,7 @@
         document.getElementById('modal-title').textContent = 'Joueur';
     }
 
-        function submitPoint(playerId) {
+    function submitPoint(playerId) {
         fetch(`/game/${gameId}/add-point`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -225,23 +289,14 @@
         });
     }
 
-        function updateScore(data) {
-            mancheId = data.manche_id;
-    document.getElementById('score-team1').textContent = data.score_team1;
-    document.getElementById('score-team2').textContent = data.score_team2;
-    document.getElementById('sets-team1').textContent  = data.sets_team1;
-    document.getElementById('sets-team2').textContent  = data.sets_team2;
-    document.getElementById('manche-number').textContent = data.manche_number;
-        updateService(data.serviceTeam);
-    }
-
-    function updateService(teamId) {
-        const indicator = document.getElementById('service-indicator');
-        if (teamId === team1Id) {
-            indicator.style.filter = 'sepia(1) saturate(5) hue-rotate(310deg)'; // rouge
-        } else {
-            indicator.style.filter = 'sepia(1) saturate(5) hue-rotate(180deg)'; // bleu
-        }
+    function updateScore(data) {
+        mancheId = data.manche_id;
+        document.getElementById('score-team1').textContent    = data.score_team1;
+        document.getElementById('score-team2').textContent    = data.score_team2;
+        document.getElementById('sets-team1').textContent     = data.sets_team1;
+        document.getElementById('sets-team2').textContent     = data.sets_team2;
+        document.getElementById('manche-number').textContent  = data.manche_number;
+        updateService(data.service_team);
     }
 
     // ── Rollback ──

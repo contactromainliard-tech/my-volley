@@ -8,8 +8,10 @@ use App\Entity\Player;
 use App\Entity\GamePlayer;
 use App\Entity\Manche;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Util\Json;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -112,5 +114,32 @@ return $this->render('game/view.html.twig', [
     'currentManche' => $currentManche, // ← corrigé
 ]);
     }
+    #[Route('/game/service', name: 'app_game_service', methods: ['POST'])]
+    public function setServiceTeam(Request $request, EntityManagerInterface $entityManager)
+    {
+        $data = json_decode($request->getContent(), true);
+        $gameId = $data['game_id'] ?? null;
+        $serviceTeamId = $data['service_team_id'] ?? null;
 
+        if (!$gameId || !$serviceTeamId) {
+            return new Response('Missing game_id or service_team_id', 400);
+        }
+
+        $game = $entityManager->getRepository(Game::class)->find($gameId);
+        $serviceTeam = $entityManager->getRepository(Team::class)->find($serviceTeamId);
+
+        if (!$game || !$serviceTeam) {
+            return new Response('Game or Team not found', 404);
+        }
+
+        $game->setServiceTeam($serviceTeam);
+        $entityManager->persist($game);
+        $entityManager->flush();
+
+        return JsonResponse::fromJsonString(json_encode([
+            'message' => 'Service team set successfully',
+            'game_id' => $game->getId(),
+            'service_team_id' => $serviceTeam->getId(),
+        ]));
+    }
 }

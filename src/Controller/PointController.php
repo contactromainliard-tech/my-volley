@@ -54,6 +54,17 @@ final class PointController extends AbstractController
 
         $entityManager->refresh($manche);
 
+        // Changement de l'équipe au service si le point est de type "service" ou "error"
+        $currentServiceTeam = $game->getServiceTeam();
+
+        // Si l'équipe qui marque n'avait pas le service → le service lui revient
+        if ($currentServiceTeam !== $team) {
+            $game->setServiceTeam($team);
+            $entityManager->persist($game);
+            $entityManager->flush();
+        }
+
+
         // Calcul des scores et sets
 
         $teams = $game->getTeams();
@@ -117,7 +128,7 @@ final class PointController extends AbstractController
             'sets_team1' => $setsTeam1,
             'sets_team2' => $setsTeam2,
             'manche_number' => isset($nextManche) ? $nextManche->getNumber() : $manche->getNumber(),
-            'service_team' => null, // on gérera ça après
+            'service_team' => $game->getServiceTeam()?->getId(),
             'manche_id' => isset($nextManche) ? $nextManche->getId() : $manche->getId(),
         ]));
     }
@@ -176,6 +187,7 @@ final class PointController extends AbstractController
             'score_team2' => $scoreTeam2,
             'sets_team1' => $setsTeam1,
             'sets_team2' => $setsTeam2,
+            'service_team' => $game->getServiceTeam()?->getId(),
             'manche_number' => $currentManche->getNumber(),
         ]));
     }
