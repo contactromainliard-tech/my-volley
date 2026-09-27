@@ -121,4 +121,62 @@ final class PointController extends AbstractController
             'manche_id' => isset($nextManche) ? $nextManche->getId() : $manche->getId(),
         ]));
     }
+    #[Route('/game/{gameId}/rollback', name: 'app_rollback', methods: ['POST'])]
+    public function rollbackPoint(int $gameId, EntityManagerInterface $entityManager): Response
+    {
+        // Récupération du match et de la dernière manche
+        $game = $entityManager->getRepository(Game::class)->find($gameId);
+        $currentManche = null;
+        foreach ($game->getManches() as $manche) {
+        if ($manche->getStatus() === 'in_progress') {
+        $currentManche = $manche;
+        break;
+            }
+        }
+        $lastPoint = $currentManche ? $currentManche->getPoints()->filter(fn($p) => $p->isCancelled() === false)->last() : null;
+        if (!$game || !$currentManche || !$lastPoint) {
+            throw $this->createNotFoundException('Game, Manche or Point not found');
+        }
+        else {
+            $lastPoint->setIsCancelled(true);
+            $entityManager->persist($lastPoint);
+            $entityManager->flush();
+            // Vérification si la manche est terminée après l'annulation du point
+            if ($currentManche->getWinnerTeam() !== null)
+            {
+                $currentManche->setWinnerTeam(null);
+                $currentManche->setStatus('in_progress');
+                $entityManager->persist($currentManche);
+                $entityManager->flush();
+            }        
+        }
+        
+        $teams = $game->getTeams();
+        $team1 = $teams->first();
+        $team2 = $teams->last();
+
+        $entityManager->refresh($currentManche);
+
+        $scoreTeam1 = $currentManche->getPoints()->filter(fn($p) => 
+            $p->getTeam() === $team1 && $p->isCancelled() === false
+        )->count();
+
+        $scoreTeam2 = $currentManche->getPoints()->filter(fn($p) => 
+            $p->getTeam() === $team2 && $p->isCancelled() === false
+        )->count();
+
+        $setsTeam1 = $game->getManches()->filter(fn($m) => $m->getWinnerTeam() === $team1)->count();
+        $setsTeam2 = $game->getManches()->filter(fn($m) => $m->getWinnerTeam() === $team2)->count();
+        
+        return JsonResponse::fromJsonString(json_encode([
+            'message' => 'Point rolled back successfully',
+            'point_id' => $lastPoint->getId(),
+            'manche_id' => $currentManche->getId(),
+            'score_team1' => $scoreTeam1,
+            'score_team2' => $scoreTeam2,
+            'sets_team1' => $setsTeam1,
+            'sets_team2' => $setsTeam2,
+            'manche_number' => $currentManche->getNumber(),
+        ]));
+    }
 }

@@ -98,14 +98,13 @@ final class GameController extends AbstractController
         $team2 = $teams->last() ?? null;
 
         $currentManche = null;
-foreach ($game->getManches() as $manche) {
+        foreach ($game->getManches() as $manche) {
     if ($manche->getStatus() === 'in_progress') {
         $currentManche = $manche;
         break;
     }
 }
 
-// 2. Passe la bonne variable au template
 return $this->render('game/view.html.twig', [
     'game' => $game,
     'team1' => $team1,
