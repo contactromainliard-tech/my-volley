@@ -3,167 +3,318 @@
 {% block title %}Match en cours{% endblock %}
 
 {% block body %}
-<div class="h-screen bg-gray-900 text-white flex flex-col overflow-hidden">
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    {# ── HEADER : score des sets ── #}
-    <header class="flex items-center justify-between px-6 py-2 bg-gray-800 border-b border-gray-700">
+    body {
+        background: linear-gradient(160deg, #2d2b55 0%, #1e1e3a 100%);
+        min-height: 100vh;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        color: #e2e8f0;
+    }
 
-        <div class="text-center">
-            <p class="text-xs text-gray-400 uppercase tracking-wider">{{ team1.name }}</p>
-            <p class="text-2xl font-bold text-red-400" id="sets-team1">0</p>
+    .hidden { display: none !important; }
+
+    .card {
+        background: rgba(255,255,255,0.07);
+        border-radius: 18px;
+        border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .card-accent-red  { border-top: 3px solid #f87171; }
+    .card-accent-blue { border-top: 3px solid #60a5fa; }
+
+    .btn-action {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #94a3b8;
+        font-size: 11px;
+        transition: color 0.2s;
+        padding: 4px 8px;
+    }
+    .btn-action:hover  { color: #e2e8f0; }
+    .btn-action:active { color: #a78bfa; }
+
+    .btn-plus {
+        width: 56px; height: 56px;
+        border-radius: 50%;
+        border: 2px solid rgba(255,255,255,0.15);
+        background: rgba(255,255,255,0.08);
+        cursor: pointer;
+        font-size: 26px;
+        font-weight: 700;
+        transition: all 0.15s;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .btn-plus:active {
+        background: rgba(255,255,255,0.15);
+        transform: scale(0.95);
+    }
+
+    .modal-backdrop {
+        position: fixed; inset: 0;
+        background: rgba(15,13,35,0.85);
+        display: flex; align-items: center; justify-content: center;
+        z-index: 50;
+    }
+
+    .modal-card {
+        background: #2d2b55;
+        border-radius: 24px;
+        padding: 28px;
+        width: 300px;
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .modal-btn {
+        width: 100%;
+        padding: 14px;
+        border-radius: 14px;
+        border: 1px solid rgba(255,255,255,0.1);
+        background: rgba(255,255,255,0.07);
+        color: #e2e8f0;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s;
+        text-align: center;
+    }
+    .modal-btn:hover  { background: rgba(255,255,255,0.13); }
+    .modal-btn:active { transform: scale(0.98); }
+
+    .modal-btn-cancel {
+        width: 100%;
+        padding: 11px;
+        border-radius: 12px;
+        border: none;
+        background: rgba(255,255,255,0.04);
+        color: #64748b;
+        font-size: 13px;
+        cursor: pointer;
+        margin-top: 12px;
+        transition: all 0.15s;
+    }
+    .modal-btn-cancel:hover { color: #94a3b8; }
+
+    .player-btn {
+        padding: 12px 8px;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.06);
+        color: #e2e8f0;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s;
+        width: 100%;
+    }
+    .player-btn:hover  { background: rgba(167,139,250,0.2); border-color: #a78bfa; }
+    .player-btn:active { transform: scale(0.97); }
+
+    .sheet-slide {
+        position: fixed; inset: 0;
+        background: rgba(15,13,35,0.85);
+        z-index: 50;
+        display: flex; align-items: flex-end;
+    }
+    .sheet-content {
+        background: #2d2b55;
+        width: 100%;
+        border-radius: 24px 24px 0 0;
+        padding: 24px;
+        max-height: 80vh;
+        overflow-y: auto;
+        border-top: 1px solid rgba(255,255,255,0.1);
+    }
+</style>
+
+<div style="height: 100vh; display: flex; flex-direction: column; overflow: hidden;">
+
+    {# ── HEADER ── #}
+    <header style="padding: 14px 20px; background: rgba(0,0,0,0.15); border-bottom: 1px solid rgba(255,255,255,0.06);">
+        <div style="display: flex; align-items: center; justify-content: space-between; max-width: 600px; margin: 0 auto;">
+
+            <div style="text-align: center;">
+                <p style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; margin-bottom: 4px;">{{ team1.name }}</p>
+                <div class="card card-accent-red" style="padding: 6px 18px; display: inline-block;">
+                    <span style="font-size: 22px; font-weight: 900; color: #f87171;" id="sets-team1">0</span>
+                </div>
+            </div>
+
+            <div style="text-align: center;">
+                <p style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; margin-bottom: 4px;">Manche</p>
+                <div class="card" style="padding: 6px 20px; display: inline-block;">
+                    <span style="font-size: 22px; font-weight: 900;" id="manche-number">{{ currentManche.number }}</span>
+                </div>
+            </div>
+
+            <div style="text-align: center;">
+                <p style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; margin-bottom: 4px;">{{ team2.name }}</p>
+                <div class="card card-accent-blue" style="padding: 6px 18px; display: inline-block;">
+                    <span style="font-size: 22px; font-weight: 900; color: #60a5fa;" id="sets-team2">0</span>
+                </div>
+            </div>
+
         </div>
-
-        <div class="text-center">
-            <p class="text-xs text-gray-400 uppercase tracking-wider">Manche</p>
-            <p class="text-2xl font-bold text-white" id="manche-number">{{ currentManche.number }}</p>
-        </div>
-
-        <div class="text-center">
-            <p class="text-xs text-gray-400 uppercase tracking-wider">{{ team2.name }}</p>
-            <p class="text-2xl font-bold text-blue-400" id="sets-team2">0</p>
-        </div>
-
     </header>
 
 
-    {# ── ZONE DE JEU : scores + boutons ── #}
-    <main class="flex-1 flex items-center justify-around px-4">
+    {# ── ZONE DE JEU ── #}
+    <main style="flex: 1; display: flex; align-items: center; justify-content: space-around; padding: 0 20px;">
 
         {# Équipe 1 #}
-        <div class="flex flex-col items-center gap-4">
-            <p class="text-lg font-semibold text-red-400 uppercase tracking-wide">{{ team1.name }}</p>
-            <p class="text-8xl font-black text-red-400" id="score-team1">{{ currentManche.scoreTeam1 }}</p>
-            <button
-                onclick="openModal(1)"
-                class="w-16 h-16 rounded-full bg-red-500 hover:bg-red-400 text-3xl font-bold shadow-lg transition"
-            >+</button>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 16px;">
+            <p style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #f87171;">{{ team1.name }}</p>
+            <div class="card card-accent-red" style="padding: 20px 36px;">
+                <span style="font-size: 80px; font-weight: 900; color: #f87171; line-height: 1;" id="score-team1">{{ currentManche.scoreTeam1 }}</span>
+            </div>
+            <button class="btn-plus" style="color: #f87171; border-color: rgba(248,113,113,0.3);" onclick="openModal(1)">+</button>
         </div>
 
-
         {# Indicateur de service #}
-        <div class="flex flex-col items-center gap-2">
-
-    <div class="flex items-center gap-3">
-        <span id="arrow-left" class="text-3xl text-red-400 transition-all duration-300 opacity-0">◀</span>
-        <span id="service-indicator" class="text-5xl transition-all duration-300" title="Service">🏐</span>
-        <span id="arrow-right" class="text-3xl text-blue-400 transition-all duration-300 opacity-0">▶</span>
-    </div>
-
-    <p class="text-xs text-gray-500">Service</p>
-</div>
-
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+            <div class="card" style="padding: 14px 18px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span id="arrow-left"  style="font-size: 16px; color: #f87171; opacity: 0; transition: opacity 0.3s;">◀</span>
+                    <span id="service-indicator" style="font-size: 28px; transition: filter 0.3s;">🏐</span>
+                    <span id="arrow-right" style="font-size: 16px; color: #60a5fa; opacity: 0; transition: opacity 0.3s;">▶</span>
+                </div>
+            </div>
+            <p style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: #475569;">Service</p>
+        </div>
 
         {# Équipe 2 #}
-        <div class="flex flex-col items-center gap-4">
-            <p class="text-lg font-semibold text-blue-400 uppercase tracking-wide">{{ team2.name }}</p>
-            <p class="text-8xl font-black text-blue-400" id="score-team2">{{ currentManche.scoreTeam2 }}</p>
-            <button
-                onclick="openModal(2)"
-                class="w-16 h-16 rounded-full bg-blue-500 hover:bg-blue-400 text-3xl font-bold shadow-lg transition"
-            >+</button>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 16px;">
+            <p style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #60a5fa;">{{ team2.name }}</p>
+            <div class="card card-accent-blue" style="padding: 20px 36px;">
+                <span style="font-size: 80px; font-weight: 900; color: #60a5fa; line-height: 1;" id="score-team2">{{ currentManche.scoreTeam2 }}</span>
+            </div>
+            <button class="btn-plus" style="color: #60a5fa; border-color: rgba(96,165,250,0.3);" onclick="openModal(2)">+</button>
         </div>
 
     </main>
 
 
     {# ── BARRE D'ACTIONS ── #}
-    <footer class="flex items-center justify-around px-6 py-3 bg-gray-800 border-t border-gray-700">
+    <footer style="padding: 10px 20px 14px; background: rgba(0,0,0,0.2); border-top: 1px solid rgba(255,255,255,0.06);">
+        <div style="display: flex; align-items: center; justify-content: space-around; max-width: 600px; margin: 0 auto;">
 
-        <button onclick="rollback()" title="Annuler" class="action-btn">↩</button>
-        <button onclick="redo()" title="Refaire" class="action-btn">↪</button>
-        <button onclick="openSubstitution()" title="Changement" class="action-btn">👤</button>
-        <button onclick="openStats()" title="Statistiques" class="action-btn">📊</button>
-        <button onclick="openMenu()" title="Menu" class="action-btn">⚙️</button>
+            <button class="btn-action" onclick="rollback()" title="Annuler">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="22" height="22">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+                </svg>
+                Annuler
+            </button>
 
+            <button class="btn-action" onclick="openSubstitution()" title="Remplacement">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="22" height="22">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                </svg>
+                Remplacer
+            </button>
+
+            <button class="btn-action" onclick="openPositions()" title="Positions">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="22" height="22">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
+                </svg>
+                Positions
+            </button>
+
+            <button class="btn-action" onclick="openStats()" title="Statistiques">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="22" height="22">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
+                </svg>
+                Stats
+            </button>
+
+            <button class="btn-action" onclick="openMenu()" title="Menu">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="22" height="22">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                </svg>
+                Menu
+            </button>
+
+        </div>
     </footer>
 
 </div>
 
 
 {# ── MODAL SERVICE INITIAL ── #}
-<div
-    id="modal-service"
-    class="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
->
-    <div class="bg-gray-800 rounded-2xl p-6 w-80 shadow-2xl">
-
-        <h2 class="text-lg font-bold mb-2 text-center">Qui commence le service ?</h2>
-        <p class="text-gray-400 text-sm text-center mb-6">Sélectionne l'équipe qui sert en premier</p>
-
-        <div class="flex flex-col gap-3">
-            <button
-                onclick="setService({{ team1.id }})"
-                class="py-4 rounded-xl bg-red-500 hover:bg-red-400 font-bold text-lg transition"
-            >{{ team1.name }}</button>
-
-            <button
-                onclick="setService({{ team2.id }})"
-                class="py-4 rounded-xl bg-blue-500 hover:bg-blue-400 font-bold text-lg transition"
-            >{{ team2.name }}</button>
+<div id="modal-service" class="modal-backdrop">
+    <div class="modal-card">
+        <h2 style="font-size: 17px; font-weight: 700; text-align: center; margin-bottom: 6px;">Qui commence le service ?</h2>
+        <p style="font-size: 13px; color: #64748b; text-align: center; margin-bottom: 20px;">Sélectionne l'équipe qui sert en premier</p>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <button class="modal-btn" style="color: #f87171; border-color: rgba(248,113,113,0.3);" onclick="setService({{ team1.id }})">{{ team1.name }}</button>
+            <button class="modal-btn" style="color: #60a5fa; border-color: rgba(96,165,250,0.3);" onclick="setService({{ team2.id }})">{{ team2.name }}</button>
         </div>
-
     </div>
 </div>
 
 
 {# ── MODAL POINT ── #}
-<div
-    id="modal-point"
-    class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50"
->
-    <div class="bg-gray-800 rounded-2xl p-6 w-80 shadow-2xl">
-
-        <h2 class="text-lg font-bold mb-4 text-center" id="modal-title">Type de point</h2>
-
-        <div class="grid grid-cols-2 gap-3 mb-4" id="step-type">
-            <button onclick="selectType('ace')"      class="point-type-btn">🎯 Ace</button>
-            <button onclick="selectType('attack')"   class="point-type-btn">⚡ Attaque</button>
-            <button onclick="selectType('block')"    class="point-type-btn">🛡️ Block</button>
-            <button onclick="selectType('fault')"    class="point-type-btn">❌ Faute</button>
+<div id="modal-point" class="modal-backdrop hidden">
+    <div class="modal-card">
+        <h2 style="font-size: 17px; font-weight: 700; text-align: center; margin-bottom: 20px;" id="modal-title">Type de point</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;" id="step-type">
+            <button class="modal-btn" onclick="selectType('ace')">🎯 Ace</button>
+            <button class="modal-btn" onclick="selectType('attack')">⚡ Attaque</button>
+            <button class="modal-btn" onclick="selectType('block')">🛡️ Block</button>
+            <button class="modal-btn" onclick="selectType('fault')">❌ Faute</button>
         </div>
-
         <div id="step-player" class="hidden">
-            <p class="text-sm text-gray-400 mb-3 text-center">Qui a marqué ?</p>
-            <div id="players-list" class="grid grid-cols-2 gap-2"></div>
+            <p style="font-size: 13px; color: #64748b; text-align: center; margin-bottom: 12px;">Qui a marqué ?</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;" id="players-list"></div>
         </div>
+        <button class="modal-btn-cancel" onclick="closeModal()">Annuler</button>
+    </div>
+</div>
 
-        <button
-            onclick="closeModal()"
-            class="mt-4 w-full py-2 rounded-xl bg-gray-700 hover:bg-gray-600 text-sm text-gray-300 transition"
-        >Annuler</button>
 
+{# ── MODAL REMPLACEMENT ── #}
+<div id="modal-substitution" class="modal-backdrop hidden">
+    <div class="modal-card">
+        <h2 style="font-size: 17px; font-weight: 700; text-align: center; margin-bottom: 20px;" id="sub-title">Remplacement</h2>
+        <div id="sub-step-team">
+            <p style="font-size: 13px; color: #64748b; text-align: center; margin-bottom: 12px;">Quelle équipe ?</p>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button class="modal-btn" style="color: #f87171;" onclick="subSelectTeam(1)">{{ team1.name }}</button>
+                <button class="modal-btn" style="color: #60a5fa;" onclick="subSelectTeam(2)">{{ team2.name }}</button>
+            </div>
+        </div>
+        <div id="sub-step-out" class="hidden">
+            <p style="font-size: 13px; color: #64748b; text-align: center; margin-bottom: 12px;">Joueur qui sort ?</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;" id="sub-players-out"></div>
+        </div>
+        <div id="sub-step-in" class="hidden">
+            <p style="font-size: 13px; color: #64748b; text-align: center; margin-bottom: 12px;">Joueur qui entre ?</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;" id="sub-players-in"></div>
+        </div>
+        <button class="modal-btn-cancel" onclick="closeSubstitution()">Annuler</button>
     </div>
 </div>
 
 
 {# ── LAYER STATS ── #}
-<div
-    id="layer-stats"
-    class="hidden fixed inset-0 bg-black/80 z-50 flex items-end"
->
-    <div class="bg-gray-800 w-full rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto">
-
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-lg font-bold">Statistiques</h2>
-            <button onclick="closeStats()" class="text-gray-400 hover:text-white text-2xl">×</button>
+<div id="layer-stats" class="sheet-slide hidden">
+    <div class="sheet-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="font-size: 17px; font-weight: 700;">Statistiques</h2>
+            <button onclick="closeStats()" style="background: none; border: none; color: #64748b; font-size: 22px; cursor: pointer;">×</button>
         </div>
-
         <div id="stats-content">
-            <p class="text-gray-500 text-center py-8">Chargement...</p>
+            <p style="color: #475569; text-align: center; padding: 32px 0;">Chargement...</p>
         </div>
-
     </div>
 </div>
 
-
-<style>
-    .action-btn {
-        @apply w-12 h-12 rounded-full bg-gray-700 hover:bg-gray-600 text-xl flex items-center justify-center transition;
-    }
-    .point-type-btn {
-        @apply py-4 rounded-xl bg-gray-700 hover:bg-green-600 font-semibold transition text-sm;
-    }
-</style>
 
 <script>
     const gameId  = {{ game.id }};
@@ -172,35 +323,42 @@
     const team2Id = {{ team2.id }};
     let serviceTeam = null;
 
-    const courtPlayers = {
+    let courtPlayers = {
         1: [
             {% for gp in team1.gamePlayers %}
-                {% if gp.isOnCourt %}
-                    { id: {{ gp.player.id }}, name: "{{ gp.player.name }}" },
-                {% endif %}
+                {% if gp.isOnCourt %}{ id: {{ gp.player.id }}, name: "{{ gp.player.name }}" },{% endif %}
             {% endfor %}
         ],
         2: [
             {% for gp in team2.gamePlayers %}
-                {% if gp.isOnCourt %}
-                    { id: {{ gp.player.id }}, name: "{{ gp.player.name }}" },
-                {% endif %}
+                {% if gp.isOnCourt %}{ id: {{ gp.player.id }}, name: "{{ gp.player.name }}" },{% endif %}
             {% endfor %}
         ]
     };
 
-    let currentTeam = null;
-    let currentType = null;
+    let benchPlayers = {
+        1: [
+            {% for gp in team1.gamePlayers %}
+                {% if not gp.isOnCourt %}{ id: {{ gp.player.id }}, name: "{{ gp.player.name }}" },{% endif %}
+            {% endfor %}
+        ],
+        2: [
+            {% for gp in team2.gamePlayers %}
+                {% if not gp.isOnCourt %}{ id: {{ gp.player.id }}, name: "{{ gp.player.name }}" },{% endif %}
+            {% endfor %}
+        ]
+    };
 
-    // ── Service ──
+    let currentTeam  = null;
+    let currentType  = null;
+    let subTeam      = null;
+    let subPlayerOut = null;
+
     function setService(teamId) {
         fetch('/game/service', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                game_id: gameId,
-                service_team_id: teamId
-            })
+            body: JSON.stringify({ game_id: gameId, service_team_id: teamId })
         })
         .then(r => r.json())
         .then(data => {
@@ -214,25 +372,21 @@
         const indicator  = document.getElementById('service-indicator');
         const arrowLeft  = document.getElementById('arrow-left');
         const arrowRight = document.getElementById('arrow-right');
-
         if (teamId === team1Id) {
-            // Équipe 1 (rouge) a le service
-            indicator.style.filter  = 'sepia(1) saturate(5) hue-rotate(310deg)';
+            indicator.style.filter   = 'sepia(1) saturate(5) hue-rotate(310deg)';
             arrowLeft.style.opacity  = '1';
             arrowRight.style.opacity = '0';
         } else if (teamId === team2Id) {
-            // Équipe 2 (bleu) a le service
-            indicator.style.filter  = 'sepia(1) saturate(5) hue-rotate(180deg)';
+            indicator.style.filter   = 'sepia(1) saturate(5) hue-rotate(180deg)';
             arrowLeft.style.opacity  = '0';
             arrowRight.style.opacity = '1';
         } else {
-            indicator.style.filter  = 'none';
+            indicator.style.filter   = 'none';
             arrowLeft.style.opacity  = '0';
             arrowRight.style.opacity = '0';
         }
     }
 
-    // ── Modal point ──
     function openModal(teamNumber) {
         currentTeam = teamNumber;
         currentType = null;
@@ -248,24 +402,17 @@
 
     function selectType(type) {
         currentType = type;
-
-        if (type === 'fault') {
-            submitPoint(null);
-            return;
-        }
-
+        if (type === 'fault') { submitPoint(null); return; }
         const players = courtPlayers[currentTeam];
         const list = document.getElementById('players-list');
         list.innerHTML = '';
-
         players.forEach(p => {
             const btn = document.createElement('button');
-            btn.className = 'py-3 rounded-xl bg-gray-700 hover:bg-green-600 text-sm font-semibold transition';
+            btn.className = 'player-btn';
             btn.textContent = p.name;
             btn.onclick = () => submitPoint(p.id);
             list.appendChild(btn);
         });
-
         document.getElementById('step-type').classList.add('hidden');
         document.getElementById('step-player').classList.remove('hidden');
         document.getElementById('modal-title').textContent = 'Joueur';
@@ -283,34 +430,97 @@
             })
         })
         .then(r => r.json())
-        .then(data => {
-            closeModal();
-            updateScore(data);
-        });
+        .then(data => { closeModal(); updateScore(data); });
     }
 
     function updateScore(data) {
         mancheId = data.manche_id;
-        document.getElementById('score-team1').textContent    = data.score_team1;
-        document.getElementById('score-team2').textContent    = data.score_team2;
-        document.getElementById('sets-team1').textContent     = data.sets_team1;
-        document.getElementById('sets-team2').textContent     = data.sets_team2;
-        document.getElementById('manche-number').textContent  = data.manche_number;
+        document.getElementById('score-team1').textContent   = data.score_team1;
+        document.getElementById('score-team2').textContent   = data.score_team2;
+        document.getElementById('sets-team1').textContent    = data.sets_team1;
+        document.getElementById('sets-team2').textContent    = data.sets_team2;
+        document.getElementById('manche-number').textContent = data.manche_number;
         updateService(data.service_team);
     }
 
-    // ── Rollback ──
+    function openSubstitution() {
+        subTeam = null; subPlayerOut = null;
+        document.getElementById('sub-step-team').classList.remove('hidden');
+        document.getElementById('sub-step-out').classList.add('hidden');
+        document.getElementById('sub-step-in').classList.add('hidden');
+        document.getElementById('sub-title').textContent = 'Remplacement';
+        document.getElementById('modal-substitution').classList.remove('hidden');
+    }
+
+    function closeSubstitution() {
+        document.getElementById('modal-substitution').classList.add('hidden');
+    }
+
+    function subSelectTeam(teamNumber) {
+        subTeam = teamNumber;
+        const list = document.getElementById('sub-players-out');
+        list.innerHTML = '';
+        courtPlayers[teamNumber].forEach(p => {
+            const btn = document.createElement('button');
+            btn.className = 'player-btn';
+            btn.textContent = p.name;
+            btn.onclick = () => subSelectOut(p.id);
+            list.appendChild(btn);
+        });
+        document.getElementById('sub-step-team').classList.add('hidden');
+        document.getElementById('sub-step-out').classList.remove('hidden');
+        document.getElementById('sub-title').textContent = 'Joueur qui sort';
+    }
+
+    function subSelectOut(playerId) {
+        subPlayerOut = playerId;
+        const allBench = [...benchPlayers[1], ...benchPlayers[2]];
+        const list = document.getElementById('sub-players-in');
+        list.innerHTML = '';
+        allBench.forEach(p => {
+            const btn = document.createElement('button');
+            btn.className = 'player-btn';
+            btn.textContent = p.name;
+            btn.onclick = () => subSelectIn(p.id);
+            list.appendChild(btn);
+        });
+        document.getElementById('sub-step-out').classList.add('hidden');
+        document.getElementById('sub-step-in').classList.remove('hidden');
+        document.getElementById('sub-title').textContent = 'Joueur qui entre';
+    }
+
+    function subSelectIn(playerInId) {
+        fetch(`/game/${gameId}/substitution`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                team_id:       subTeam === 1 ? team1Id : team2Id,
+                player_out_id: subPlayerOut,
+                player_in_id:  playerInId
+            })
+        })
+        .then(r => r.json())
+        .then(() => {
+            const teamNum   = subTeam;
+            const outPlayer = courtPlayers[teamNum].find(p => p.id === subPlayerOut);
+            const inTeam    = benchPlayers[1].find(p => p.id === playerInId) ? 1 : 2;
+            const inPlayer  = benchPlayers[inTeam].find(p => p.id === playerInId);
+
+            courtPlayers[teamNum] = courtPlayers[teamNum].filter(p => p.id !== subPlayerOut);
+            benchPlayers[inTeam]  = benchPlayers[inTeam].filter(p => p.id !== playerInId);
+            if (outPlayer) benchPlayers[teamNum].push(outPlayer);
+            if (inPlayer)  courtPlayers[teamNum].push(inPlayer);
+
+            closeSubstitution();
+        });
+    }
+
     function rollback() {
         fetch(`/game/${gameId}/rollback`, { method: 'POST' })
         .then(r => r.json())
         .then(data => updateScore(data));
     }
 
-    function redo() {
-        // À implémenter
-    }
-
-    // ── Stats ──
     function openStats() {
         document.getElementById('layer-stats').classList.remove('hidden');
         fetch(`/game/${gameId}/stats`)
@@ -322,13 +532,9 @@
         document.getElementById('layer-stats').classList.add('hidden');
     }
 
-    function renderStats(data) {
-        // À implémenter
-    }
-
-    function openSubstitution() { }
-    function openMenu() { }
-
+    function renderStats(data) { }
+    function openPositions()   { }
+    function openMenu()        { }
 </script>
 
 {% endblock %}
