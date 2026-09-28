@@ -315,6 +315,65 @@
     </div>
 </div>
 
+{# ── MODALE POSITIONS ── #}
+<div id="modal-positions" class="sheet-slide hidden">
+    <div class="sheet-content" style="max-height: 95vh;">
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h2 style="font-size: 17px; font-weight: 700;">Positions</h2>
+            <button onclick="closePositions()" style="background: none; border: none; color: #64748b; font-size: 22px; cursor: pointer;">×</button>
+        </div>
+
+        {# Terrain SVG #}
+        <div id="terrain-container" style="position: relative; width: 100%; max-width: 560px; margin: 0 auto;">
+            <svg viewBox="0 0 560 320" xmlns="http://www.w3.org/2000/svg" style="width: 100%; border-radius: 12px;">
+
+                {# Fond terrain #}
+                <rect width="560" height="320" rx="12" fill="#c47a2b"/>
+
+                {# Bordure extérieure #}
+                <rect x="20" y="20" width="520" height="280" fill="none" stroke="white" stroke-width="2"/>
+
+                {# Filet central #}
+                <line x1="280" y1="10" x2="280" y2="310" stroke="white" stroke-width="3"/>
+
+                {# Ligne des 3m équipe 1 #}
+                <line x1="107" y1="20" x2="107" y2="300" stroke="white" stroke-width="1" stroke-dasharray="6,4"/>
+
+                {# Ligne des 3m équipe 2 #}
+                <line x1="453" y1="20" x2="453" y2="300" stroke="white" stroke-width="1" stroke-dasharray="6,4"/>
+
+                {# Bordure terrain couleur teal #}
+                <rect width="560" height="320" rx="12" fill="none" stroke="#0d9488" stroke-width="8"/>
+
+            </svg>
+
+            {# Joueurs équipe 1 — côté gauche #}
+            <div id="positions-team1" style="position: absolute; inset: 0;">
+                {# Les joueurs sont injectés par JS #}
+            </div>
+
+            {# Joueurs équipe 2 — côté droit #}
+            <div id="positions-team2" style="position: absolute; inset: 0;">
+                {# Les joueurs sont injectés par JS #}
+            </div>
+
+        </div>
+
+        {# Légende #}
+        <div style="display: flex; justify-content: center; gap: 24px; margin-top: 16px;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <div style="width: 12px; height: 12px; border-radius: 50%; background: #f87171;"></div>
+                <span style="font-size: 12px; color: #94a3b8;">{{ team1.name }}</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <div style="width: 12px; height: 12px; border-radius: 50%; background: #60a5fa;"></div>
+                <span style="font-size: 12px; color: #94a3b8;">{{ team2.name }}</span>
+            </div>
+        </div>
+
+    </div>
+</div>
 
 <script>
     const gameId  = {{ game.id }};
@@ -490,30 +549,36 @@
     }
 
     function subSelectIn(playerInId) {
-        fetch(`/game/${gameId}/substitution`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                team_id:       subTeam === 1 ? team1Id : team2Id,
-                player_out_id: subPlayerOut,
-                player_in_id:  playerInId
-            })
+    fetch(`/game/${gameId}/player/substitution`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            team_id:       subTeam === 1 ? team1Id : team2Id,
+            player_out_id: subPlayerOut,
+            player_in_id:  playerInId
         })
-        .then(r => r.json())
-        .then(() => {
-            const teamNum   = subTeam;
-            const outPlayer = courtPlayers[teamNum].find(p => p.id === subPlayerOut);
-            const inTeam    = benchPlayers[1].find(p => p.id === playerInId) ? 1 : 2;
-            const inPlayer  = benchPlayers[inTeam].find(p => p.id === playerInId);
+    })
+    .then(r => r.json())
+    .then(() => {
+        const teamNum   = subTeam;
+        const outPlayer = courtPlayers[teamNum].find(p => p.id === subPlayerOut);
+        const inTeam    = benchPlayers[1].find(p => p.id === playerInId) ? 1 : 2;
+        const inPlayer  = benchPlayers[inTeam].find(p => p.id === playerInId);
 
-            courtPlayers[teamNum] = courtPlayers[teamNum].filter(p => p.id !== subPlayerOut);
-            benchPlayers[inTeam]  = benchPlayers[inTeam].filter(p => p.id !== playerInId);
-            if (outPlayer) benchPlayers[teamNum].push(outPlayer);
-            if (inPlayer)  courtPlayers[teamNum].push(inPlayer);
+        courtPlayers[teamNum] = courtPlayers[teamNum].filter(p => p.id !== subPlayerOut);
+        benchPlayers[inTeam]  = benchPlayers[inTeam].filter(p => p.id !== playerInId);
+        if (outPlayer) benchPlayers[teamNum].push(outPlayer);
+        if (inPlayer)  courtPlayers[teamNum].push(inPlayer);
 
-            closeSubstitution();
-        });
-    }
+        const outPosition = positionPlayers[teamNum].find(p => p.id === subPlayerOut)?.position;
+        positionPlayers[teamNum] = positionPlayers[teamNum].filter(p => p.id !== subPlayerOut);
+        if (inPlayer && outPosition) {
+            positionPlayers[teamNum].push({ id: inPlayer.id, name: inPlayer.name, position: outPosition });
+        }
+
+        closeSubstitution();
+    });
+}
 
     function rollback() {
         fetch(`/game/${gameId}/rollback`, { method: 'POST' })
@@ -533,7 +598,170 @@
     }
 
     function renderStats(data) { }
-    function openPositions()   { }
+    // Coordonnées des 6 positions sur le terrain (en %)
+// Équipe 1 côté gauche
+const positionsTeam1 = {
+    5: { left: '14%', top: '25%' },
+    6: { left: '14%', top: '50%' },
+    1: { left: '14%', top: '75%' },
+    4: { left: '38%', top: '25%' },
+    3: { left: '38%', top: '50%' },
+    2: { left: '38%', top: '75%' },
+};
+
+const positionsTeam2 = {
+    1: { left: '55%', top: '25%' },
+    6: { left: '55%', top: '50%' },
+    5: { left: '55%', top: '75%' },
+    2: { left: '79%', top: '25%' },
+    3: { left: '79%', top: '50%' },
+    4: { left: '79%', top: '75%' },
+};
+
+// Joueurs avec leurs positions injectés depuis Twig
+let positionPlayers = {
+    1: [
+        {% for gp in team1.gamePlayers %}
+            {% if gp.isOnCourt and gp.position is not null %}
+                { id: {{ gp.player.id }}, name: "{{ gp.player.name }}", position: {{ gp.position }} },
+            {% endif %}
+        {% endfor %}
+    ],
+    2: [
+        {% for gp in team2.gamePlayers %}
+            {% if gp.isOnCourt and gp.position is not null %}
+                { id: {{ gp.player.id }}, name: "{{ gp.player.name }}", position: {{ gp.position }} },
+            {% endif %}
+        {% endfor %}
+    ]
+};
+
+let draggedPlayer = null;
+let draggedTeam   = null;
+
+function openPositions() {
+    renderPositions();
+    document.getElementById('modal-positions').classList.remove('hidden');
+}
+
+function closePositions() {
+    document.getElementById('modal-positions').classList.add('hidden');
+}
+
+function renderPositions() {
+    renderTeamPositions(1, 'positions-team1', positionsTeam1, '#f87171');
+    renderTeamPositions(2, 'positions-team2', positionsTeam2, '#60a5fa');
+}
+
+function renderTeamPositions(teamNum, containerId, posMap, color) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+
+    positionPlayers[teamNum].forEach(p => {
+        const pos = posMap[p.position];
+        if (!pos) return;
+
+        const el = document.createElement('div');
+        el.style.cssText = `
+            position: absolute;
+            left: ${pos.left};
+            top: ${pos.top};
+            transform: translate(-50%, -50%);
+            background: ${color};
+            border-radius: 50%;
+            width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 9px; font-weight: 700;
+            color: white;
+            text-align: center;
+            cursor: grab;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            border: 2px solid rgba(255,255,255,0.3);
+            line-height: 1.1;
+            padding: 2px;
+            user-select: none;
+            z-index: 10;
+        `;
+        el.textContent = p.name.split(' ')[0]; // Prénom seulement
+        el.draggable = true;
+        el.dataset.playerId = p.id;
+        el.dataset.position = p.position;
+        el.dataset.team = teamNum;
+
+        el.addEventListener('dragstart', e => {
+            draggedPlayer = p;
+            draggedTeam   = teamNum;
+            e.dataTransfer.effectAllowed = 'move';
+        });
+
+        container.appendChild(el);
+    });
+
+    // Zones de drop pour chaque position
+    Object.entries(posMap).forEach(([pos, coords]) => {
+        const zone = document.createElement('div');
+        zone.style.cssText = `
+            position: absolute;
+            left: ${coords.left};
+            top: ${coords.top};
+            transform: translate(-50%, -50%);
+            width: 52px; height: 52px;
+            border-radius: 50%;
+            border: 2px dashed rgba(255,255,255,0.2);
+            z-index: 5;
+        `;
+        zone.dataset.dropPosition = pos;
+        zone.dataset.dropTeam = teamNum;
+
+        zone.addEventListener('dragover', e => {
+            e.preventDefault();
+            zone.style.borderColor = 'rgba(255,255,255,0.6)';
+        });
+
+        zone.addEventListener('dragleave', () => {
+            zone.style.borderColor = 'rgba(255,255,255,0.2)';
+        });
+
+        zone.addEventListener('drop', e => {
+            e.preventDefault();
+            zone.style.borderColor = 'rgba(255,255,255,0.2)';
+
+            if (draggedTeam !== teamNum) return; // Pas de swap inter-équipe
+
+            const targetPos = parseInt(pos);
+            const sourcePos = draggedPlayer.position;
+
+            if (targetPos === sourcePos) return;
+
+            // Trouver le joueur à la position cible
+            const targetPlayer = positionPlayers[teamNum].find(p => p.position === targetPos);
+
+            // Swap des positions
+            draggedPlayer.position = targetPos;
+            if (targetPlayer) targetPlayer.position = sourcePos;
+
+            // Sauvegarder en base
+            savePositions(teamNum);
+
+            renderPositions();
+        });
+
+        container.appendChild(zone);
+    });
+}
+
+function savePositions(teamNum) {
+    const updates = positionPlayers[teamNum].map(p => ({
+        player_id: p.id,
+        position:  p.position
+    }));
+
+    fetch(`/game/${gameId}/positions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ team_id: teamNum === 1 ? team1Id : team2Id, positions: updates })
+    });
+}
     function openMenu()        { }
 </script>
 

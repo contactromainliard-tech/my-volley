@@ -26,6 +26,9 @@ class GamePlayer
     #[ORM\Column]
     private ?bool $is_on_court = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?int $position = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -82,6 +85,18 @@ class GamePlayer
     public function setIsOnCourt(bool $is_on_court): static
     {
         $this->is_on_court = $is_on_court;
+
+        return $this;
+    }
+
+    public function getPosition(): ?int
+    {
+        return $this->position;
+    }
+
+    public function setPosition(?int $position): static
+    {
+        $this->position = $position;
 
         return $this;
     }

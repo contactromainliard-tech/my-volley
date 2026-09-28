@@ -58,4 +58,37 @@ final class GamePlayerController extends AbstractController
             'player_in_id'  => $playerIn->getId(),
         ]);
     }
+    #[Route('/game/{gameId}/player/substitution', name: 'app_game_substitution', methods: ['POST'])]
+    public function updatePositions(int $gameId, Request $request, EntityManagerInterface $entityManager): JsonResponse
+{
+    $data    = json_decode($request->getContent(), true);
+    $teamId  = $data['team_id'] ?? null;
+    $updates = $data['positions'] ?? [];
+
+    $game = $entityManager->getRepository(Game::class)->find($gameId);
+    $team = $entityManager->getRepository(Team::class)->find($teamId);
+
+    if (!$game || !$team) {
+        return new JsonResponse(['error' => 'Not found'], 404);
+    }
+
+    foreach ($updates as $update) {
+        $player = $entityManager->getRepository(Player::class)->find($update['player_id']);
+        if (!$player) continue;
+
+        $gp = $entityManager->getRepository(GamePlayer::class)->findOneBy([
+            'game'   => $game,
+            'team'   => $team,
+            'player' => $player
+        ]);
+
+        if ($gp) {
+            $gp->setPosition($update['position']);
+        }
+    }
+
+    $entityManager->flush();
+
+    return new JsonResponse(['message' => 'Positions updated']);
+}
 }

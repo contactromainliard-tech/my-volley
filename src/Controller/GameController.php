@@ -60,6 +60,7 @@ final class GameController extends AbstractController
             $gamePlayer->setTeam($team1);
             $gamePlayer->setPlayer($player);
             $gamePlayer->setIsOnCourt($index <6);
+            $gamePlayer->setPosition($index < 6 ? $index + 1 : null);
             $entityManager->persist($gamePlayer);
         }
 
@@ -73,7 +74,8 @@ final class GameController extends AbstractController
             $gamePlayer->setGame($game);
             $gamePlayer->setTeam($team2);
             $gamePlayer->setPlayer($player);
-             $gamePlayer->setIsOnCourt($index <6);
+            $gamePlayer->setIsOnCourt($index <6);
+            $gamePlayer->setPosition($index < 6 ? $index + 1 : null);
             $entityManager->persist($gamePlayer);
         }
 
@@ -90,29 +92,6 @@ final class GameController extends AbstractController
         $entityManager->flush();
 
         return $this->redirectToRoute('app_game_view', ['id' => $game->getId()]);
-    }
-
-    #[Route('/game/{id}', name: 'app_game_view', methods: ['GET'])]
-    public function game(Game $game): Response
-    {
-        $teams = $game->getTeams();
-        $team1 = $teams->first() ?? null;
-        $team2 = $teams->last() ?? null;
-
-        $currentManche = null;
-        foreach ($game->getManches() as $manche) {
-    if ($manche->getStatus() === 'in_progress') {
-        $currentManche = $manche;
-        break;
-    }
-}
-
-return $this->render('game/view.html.twig', [
-    'game' => $game,
-    'team1' => $team1,
-    'team2' => $team2,
-    'currentManche' => $currentManche, // ← corrigé
-]);
     }
     #[Route('/game/service', name: 'app_game_service', methods: ['POST'])]
     public function setServiceTeam(Request $request, EntityManagerInterface $entityManager)
@@ -141,5 +120,27 @@ return $this->render('game/view.html.twig', [
             'game_id' => $game->getId(),
             'service_team_id' => $serviceTeam->getId(),
         ]));
+    }
+    #[Route('/game/{id}', name: 'app_game_view', methods: ['GET'])]
+    public function game(Game $game): Response
+    {
+        $teams = $game->getTeams();
+        $team1 = $teams->first() ?? null;
+        $team2 = $teams->last() ?? null;
+
+        $currentManche = null;
+        foreach ($game->getManches() as $manche) {
+    if ($manche->getStatus() === 'in_progress') {
+        $currentManche = $manche;
+        break;
+    }
+}
+
+return $this->render('game/view.html.twig', [
+    'game' => $game,
+    'team1' => $team1,
+    'team2' => $team2,
+    'currentManche' => $currentManche, // ← corrigé
+]);
     }
 }
