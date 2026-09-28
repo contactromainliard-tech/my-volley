@@ -202,4 +202,76 @@ final class PointController extends AbstractController
             'manche_number' => $currentManche->getNumber(),
         ]));
     }
+    #[Route('/game/{gameId}/stats', name: 'app_stats', methods: ['GET'])]
+public function getStats(int $gameId, EntityManagerInterface $entityManager): JsonResponse
+{
+    $game = $entityManager->getRepository(Game::class)->find($gameId);
+    if (!$game) {
+        return new JsonResponse(['error' => 'Game not found'], 404);
+    }
+
+    $teams = $game->getTeams();
+    $team1 = $teams->first();
+    $team2 = $teams->last();
+
+    $result = [];
+
+    foreach ([$team1, $team2] as $team) {
+        $teamData = [
+            'team_name' => $team->getName(),
+            'players'   => [],
+            'faults'    => 0,
+        ];
+
+        // Stats par joueur
+        $gamePlayers = $entityManager->getRepository(GamePlayer::class)->findBy([
+            'game' => $game,
+            'team' => $team,
+        ]);
+
+        foreach ($gamePlayers as $gp) {
+            $player = $gp->getPlayer();
+            $points = $entityManager->getRepository(\App\Entity\Point::class)->findBy([
+                'player'       => $player,
+                'team'         => $team,
+                'is_cancelled' => false,
+            ]);
+
+            $stats = ['ace' => 0, 'attack' => 0, 'block' => 0];
+            foreach ($points as $point) {
+                if (isset($stats[$point->getType()])) {
+                    $stats[$point->getType()]++;
+                }
+            }
+
+            $total = array_sum($stats);
+            if ($total > 0) {
+                $teamData['players'][] = [
+                    'name'    => $player->getName(),
+                    'ace'     => $stats['ace'],
+                    'attack'  => $stats['attack'],
+                    'block'   => $stats['block'],
+                    'total'   => $total,
+                ];
+            }
+        }
+
+        // Fautes adverses (points de type fault marqués par l'équipe adverse)
+        $otherTeam = $team === $team1 ? $team2 : $team1;
+        $faults = $entityManager->getRepository(\App\Entity\Point::class)->findBy([
+            'team'         => $otherTeam,
+            'is_cancelled' => false,
+        ]);
+        foreach ($faults as $point) {
+            if ($point->getType() === 'fault') {
+                $teamData['faults']++;
+            }
+        }
+
+        $result[] = $teamData;
+    }
+
+    return new JsonResponse($result);
+}
+    
 }

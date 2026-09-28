@@ -607,7 +607,88 @@
         document.getElementById('layer-stats').classList.add('hidden');
     }
 
-    function renderStats(data) { }
+    function renderStats(data) {
+    const container = document.getElementById('stats-content');
+    container.innerHTML = '';
+
+    data.forEach(team => {
+        const section = document.createElement('div');
+        section.style.cssText = 'margin-bottom: 24px;';
+
+        // Titre équipe
+        const title = document.createElement('p');
+        title.style.cssText = 'font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #a78bfa; margin-bottom: 12px;';
+        title.textContent = team.team_name;
+        section.appendChild(title);
+
+        // Joueurs
+        if (team.players.length === 0) {
+            const empty = document.createElement('p');
+            empty.style.cssText = 'font-size: 12px; color: #475569; margin-bottom: 8px;';
+            empty.textContent = 'Aucun point marqué';
+            section.appendChild(empty);
+        }
+
+        team.players.forEach(p => {
+            const row = document.createElement('div');
+            row.style.cssText = `
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px 12px;
+                border-radius: 12px;
+                background: rgba(255,255,255,0.05);
+                margin-bottom: 6px;
+                border: 1px solid rgba(255,255,255,0.06);
+            `;
+
+            const name = document.createElement('span');
+            name.style.cssText = 'font-size: 13px; font-weight: 600; color: #e2e8f0; min-width: 80px;';
+            name.textContent = p.name;
+
+            const stats = document.createElement('div');
+            stats.style.cssText = 'display: flex; gap: 12px;';
+
+            [
+                { label: '🎯', value: p.ace,    color: '#a78bfa' },
+                { label: '⚡', value: p.attack, color: '#60a5fa' },
+                { label: '🛡️', value: p.block,  color: '#34d399' },
+            ].forEach(s => {
+                const stat = document.createElement('div');
+                stat.style.cssText = 'display: flex; flex-direction: column; align-items: center; gap: 2px;';
+                stat.innerHTML = `
+                    <span style="font-size: 10px;">${s.label}</span>
+                    <span style="font-size: 14px; font-weight: 700; color: ${s.color};">${s.value}</span>
+                `;
+                stats.appendChild(stat);
+            });
+
+            row.appendChild(name);
+            row.appendChild(stats);
+            section.appendChild(row);
+        });
+
+        // Fautes adverses
+        const faultRow = document.createElement('div');
+        faultRow.style.cssText = `
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.15);
+            margin-top: 6px;
+        `;
+        faultRow.innerHTML = `
+            <span style="font-size: 13px; color: #f87171;">❌ Fautes adverses</span>
+            <span style="font-size: 16px; font-weight: 700; color: #f87171;">${team.faults}</span>
+        `;
+        section.appendChild(faultRow);
+
+        container.appendChild(section);
+    });
+}
     // Coordonnées des 6 positions sur le terrain (en %)
 // Équipe 1 côté gauche
 const positionsTeam1 = {
