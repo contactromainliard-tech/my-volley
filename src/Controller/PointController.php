@@ -56,12 +56,23 @@ final class PointController extends AbstractController
 
         // Changement de l'équipe au service si le point est de type "service" ou "error"
         $currentServiceTeam = $game->getServiceTeam();
-
         // Si l'équipe qui marque n'avait pas le service → le service lui revient
         if ($currentServiceTeam !== $team) {
             $game->setServiceTeam($team);
             $entityManager->persist($game);
             $entityManager->flush();
+            // Rotation des joueurs de l'équipe qui récupère le service
+        $gamePlayers = $entityManager->getRepository(GamePlayer::class)->findBy([
+            'game' => $game,
+            'team' => $team,
+            'is_on_court' => true // uniquement les titulaires
+        ]);
+
+        foreach ($gamePlayers as $gp) {
+            $newPosition = ($gp->getPosition() - 2 + 6) % 6 + 1; // 1→6, 6→5... 2→1
+            $gp->setPosition($newPosition);
+        }
+        $entityManager->flush();
         }
 
 

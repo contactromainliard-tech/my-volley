@@ -493,14 +493,24 @@
     }
 
     function updateScore(data) {
-        mancheId = data.manche_id;
-        document.getElementById('score-team1').textContent   = data.score_team1;
-        document.getElementById('score-team2').textContent   = data.score_team2;
-        document.getElementById('sets-team1').textContent    = data.sets_team1;
-        document.getElementById('sets-team2').textContent    = data.sets_team2;
-        document.getElementById('manche-number').textContent = data.manche_number;
-        updateService(data.service_team);
+    mancheId = data.manche_id;
+    document.getElementById('score-team1').textContent   = data.score_team1;
+    document.getElementById('score-team2').textContent   = data.score_team2;
+    document.getElementById('sets-team1').textContent    = data.sets_team1;
+    document.getElementById('sets-team2').textContent    = data.sets_team2;
+    document.getElementById('manche-number').textContent = data.manche_number;
+
+    // Si le service a changé → rotation côté JS
+    if (data.service_team !== serviceTeam) {
+        const teamNum = data.service_team === team1Id ? 1 : 2;
+        positionPlayers[teamNum].forEach(p => {
+            p.position = (p.position - 2 + 6) % 6 + 1;
+        });
     }
+
+    updateService(data.service_team);
+    serviceTeam = data.service_team;
+}
 
     function openSubstitution() {
         subTeam = null; subPlayerOut = null;
@@ -610,12 +620,12 @@ const positionsTeam1 = {
 };
 
 const positionsTeam2 = {
-    1: { left: '55%', top: '25%' },
-    6: { left: '55%', top: '50%' },
-    5: { left: '55%', top: '75%' },
-    2: { left: '79%', top: '25%' },
-    3: { left: '79%', top: '50%' },
-    4: { left: '79%', top: '75%' },
+    2: { left: '55%', top: '25%' },
+    3: { left: '55%', top: '50%' },
+    4: { left: '55%', top: '75%' },
+    1: { left: '79%', top: '25%' },
+    6: { left: '79%', top: '50%' },
+    5: { left: '79%', top: '75%' },
 };
 
 // Joueurs avec leurs positions injectés depuis Twig
