@@ -89,34 +89,48 @@ final class PointController extends AbstractController
 
         $setsTeam2 = $game->getManches()->filter(fn($m) => $m->getWinnerTeam() === $team2)->count();
 
-        if ($manche->getNumber() === 5) {
+        $isDecisiveSet = ($setsTeam1 >= 2 && $setsTeam2 >= 2);
+        if ($isDecisiveSet) {
             if ($scoreTeam1 >= 15 && $scoreTeam1 - $scoreTeam2 >= 2) {
                 $manche->setWinnerTeam($team1);
                 $manche->setStatus('finished');
+                $entityManager->persist($manche);
             } elseif ($scoreTeam2 >= 15 && $scoreTeam2 - $scoreTeam1 >= 2) {
                 $manche->setWinnerTeam($team2);
                 $manche->setStatus('finished');
+                $entityManager->persist($manche); 
             }
         } else {
             if ($scoreTeam1 >= 25 && $scoreTeam1 - $scoreTeam2 >= 2) {
                 $manche->setWinnerTeam($team1);
                 $manche->setStatus('finished');
+                $entityManager->persist($manche); 
             } elseif ($scoreTeam2 >= 25 && $scoreTeam2 - $scoreTeam1 >= 2) {
                 $manche->setWinnerTeam($team2);
                 $manche->setStatus('finished');
+                $entityManager->persist($manche);
             }
         }
-
+        
+        $entityManager->flush();
         $nextManche = null;
 
         if ($manche->getStatus() === 'finished') {
-            // Vérification si le match est terminé
-            $setsTeam1 = $game->getManches()->filter(fn($m) => $m->getWinnerTeam() === $team1)->count();
-            $setsTeam2 = $game->getManches()->filter(fn($m) => $m->getWinnerTeam() === $team2)->count();
+            // Recalcul depuis la base directement
+            $setsTeam1 = $entityManager->getRepository(Manche::class)->count([
+                'game'       => $game,
+                'winnerTeam' => $team1,
+            ]);
+            $setsTeam2 = $entityManager->getRepository(Manche::class)->count([
+                'game'       => $game,
+                'winnerTeam' => $team2,
+            ]);
 
-            if ($setsTeam1 === 3 || $setsTeam2 === 3) {
+            if ($setsTeam1 >= 3 || $setsTeam2 >= 3) {
                 $game->setStatus('finished');
-                $game->setWinnerTeam($setsTeam1 === 3 ? $team1 : $team2);
+                $game->setWinnerTeam($setsTeam1 >= 3 ? $team1 : $team2);
+                $entityManager->persist($game);
+                $entityManager->flush(); 
             } else {
                 // Création de la manche suivante
                 $nextManche = new Manche();
@@ -141,6 +155,8 @@ final class PointController extends AbstractController
             'manche_number' => isset($nextManche) ? $nextManche->getNumber() : $manche->getNumber(),
             'service_team' => $game->getServiceTeam()?->getId(),
             'manche_id' => isset($nextManche) ? $nextManche->getId() : $manche->getId(),
+            'game_status' => $game->getStatus(),
+            'winner_name' => $game->getWinnerTeam()?->getName(),
         ]));
     }
     #[Route('/game/{gameId}/rollback', name: 'app_rollback', methods: ['POST'])]
@@ -272,6 +288,5 @@ public function getStats(int $gameId, EntityManagerInterface $entityManager): Js
     }
 
     return new JsonResponse($result);
-}
-    
+}  
 }

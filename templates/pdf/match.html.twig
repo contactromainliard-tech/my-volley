@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            color: #1a1a2e;
+            margin: 20px;
+        }
+        h1 {
+            font-size: 20px;
+            text-align: center;
+            margin-bottom: 4px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            font-size: 11px;
+            margin-bottom: 20px;
+        }
+        .score-box {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+        .teams-header {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 24px;
+        }
+        .teams-header td {
+            width: 50%;
+            text-align: center;
+            padding: 10px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .team1 { color: #c0392b; }
+        .team2 { color: #2980b9; }
+        .sets-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 24px;
+        }
+        .sets-table th {
+            background: #1a1a2e;
+            color: white;
+            padding: 6px 10px;
+            text-align: center;
+            font-size: 11px;
+        }
+        .sets-table td {
+            padding: 6px 10px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+        .sets-table tr:nth-child(even) { background: #f8f9fa; }
+        .section-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: #1a1a2e;
+            border-bottom: 2px solid #1a1a2e;
+            padding-bottom: 4px;
+            margin-bottom: 10px;
+            margin-top: 20px;
+        }
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+        }
+        .stats-table th {
+            background: #f0f0f0;
+            padding: 6px 10px;
+            text-align: left;
+            font-size: 11px;
+            border-bottom: 1px solid #ddd;
+        }
+        .stats-table td {
+            padding: 6px 10px;
+            border-bottom: 1px solid #eee;
+            font-size: 11px;
+        }
+        .stats-table td.center { text-align: center; }
+        .fault-row {
+            background: #fff0f0;
+            font-weight: bold;
+        }
+        .winner-badge {
+            display: inline-block;
+            background: #27ae60;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            margin-left: 6px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Feuille de match</h1>
+    <p class="subtitle">{{ game.createdAt|date('d/m/Y') }}</p>
+
+    {# En-tête équipes #}
+    <table class="teams-header">
+        <tr>
+            <td class="team1">
+                {{ teams[0].name }}
+                {% if game.winnerTeam and game.winnerTeam.id == teams[0].id %}
+                    <span class="winner-badge">Vainqueur</span>
+                {% endif %}
+            </td>
+            <td style="text-align: center; font-size: 13px; color: #666;">VS</td>
+            <td class="team2">
+                {{ teams[1].name }}
+                {% if game.winnerTeam and game.winnerTeam.id == teams[1].id %}
+                    <span class="winner-badge">Vainqueur</span>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+
+    {# Score par manche #}
+    <div class="section-title">Score par manche</div>
+    <table class="sets-table">
+        <thead>
+            <tr>
+                <th>Manche</th>
+                <th>{{ teams[0].name }}</th>
+                <th>{{ teams[1].name }}</th>
+                <th>Vainqueur</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for manche in manches %}
+                {% set manchePoints = points|filter(p => p.manche.id == manche.id) %}
+                {% set score1 = manchePoints|filter(p => p.team.id == teams[0].id)|length %}
+                {% set score2 = manchePoints|filter(p => p.team.id == teams[1].id)|length %}
+                <tr>
+                    <td style="text-align: center;">{{ manche.number }}</td>
+                    <td style="text-align: center; font-weight: bold; color: #c0392b;">{{ score1 }}</td>
+                    <td style="text-align: center; font-weight: bold; color: #2980b9;">{{ score2 }}</td>
+                    <td style="text-align: center;">
+                        {% if manche.winnerTeam %}
+                            {{ manche.winnerTeam.name }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {# Stats équipe 1 #}
+    <div class="section-title" style="color: #c0392b;">{{ teams[0].name }} — Statistiques</div>
+    <table class="stats-table">
+        <thead>
+            <tr>
+                <th>Joueur</th>
+                <th>Ace</th>
+                <th>Attaque</th>
+                <th>Block</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for gp in players %}
+                {% if gp.team.id == teams[0].id and gp.isOnCourt %}
+                    {% set playerPoints = points|filter(p => p.player and p.player.id == gp.player.id) %}
+                    {% set ace    = playerPoints|filter(p => p.type == 'ace')|length %}
+                    {% set attack = playerPoints|filter(p => p.type == 'attack')|length %}
+                    {% set block  = playerPoints|filter(p => p.type == 'block')|length %}
+                    {% set total  = ace + attack + block %}
+                    <tr>
+                        <td>{{ gp.player.name }}</td>
+                        <td class="center">{{ ace }}</td>
+                        <td class="center">{{ attack }}</td>
+                        <td class="center">{{ block }}</td>
+                        <td class="center"><strong>{{ total }}</strong></td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+            {% set faults1 = points|filter(p => p.team.id == teams[1].id and p.type == 'fault')|length %}
+            <tr class="fault-row">
+                <td>Fautes adverses</td>
+                <td class="center" colspan="3"></td>
+                <td class="center">{{ faults1 }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    {# Stats équipe 2 #}
+    <div class="section-title" style="color: #2980b9;">{{ teams[1].name }} — Statistiques</div>
+    <table class="stats-table">
+        <thead>
+            <tr>
+                <th>Joueur</th>
+                <th>Ace</th>
+                <th>Attaque</th>
+                <th>Block</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for gp in players %}
+                {% if gp.team.id == teams[1].id and gp.isOnCourt %}
+                    {% set playerPoints = points|filter(p => p.player and p.player.id == gp.player.id) %}
+                    {% set ace    = playerPoints|filter(p => p.type == 'ace')|length %}
+                    {% set attack = playerPoints|filter(p => p.type == 'attack')|length %}
+                    {% set block  = playerPoints|filter(p => p.type == 'block')|length %}
+                    {% set total  = ace + attack + block %}
+                    <tr>
+                        <td>{{ gp.player.name }}</td>
+                        <td class="center">{{ ace }}</td>
+                        <td class="center">{{ attack }}</td>
+                        <td class="center">{{ block }}</td>
+                        <td class="center"><strong>{{ total }}</strong></td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+            {% set faults2 = points|filter(p => p.team.id == teams[0].id and p.type == 'fault')|length %}
+            <tr class="fault-row">
+                <td>Fautes adverses</td>
+                <td class="center" colspan="3"></td>
+                <td class="center">{{ faults2 }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+</body>
+</html>

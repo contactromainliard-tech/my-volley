@@ -121,26 +121,70 @@ final class GameController extends AbstractController
             'service_team_id' => $serviceTeam->getId(),
         ]));
     }
+    #[Route('/game/{gameId}/continue', name: 'app_game_continue', methods: ['POST'])]
+    public function continueGame(int $gameId, EntityManagerInterface $entityManager): Response
+    {
+        $game = $entityManager->getRepository(Game::class)->find($gameId);
+
+        if (!$game) {
+            return new Response('Game not found', 404);
+        }
+
+        $game->setStatus('in_progress');
+        $game->setWinnerTeam(null);
+        $entityManager->persist($game);
+        $entityManager->flush();
+        // Créer un nouveau set
+        $manche = new Manche();
+        $manche->setGame($game);
+        $manche->setNumber($game->getManches()->count() + 1);
+        $manche->setScoreTeam1(0);
+        $manche->setScoreTeam2(0);
+        $manche->setStatus('in_progress');
+        $entityManager->persist($manche);
+
+        $entityManager->flush();
+
+        return JsonResponse::fromJsonString(json_encode([
+            'message' => 'New set created successfully',
+            'game_id' => $game->getId(),
+            'manche_id' => $manche->getId(),
+            'manche_number' => $manche->getNumber(),
+            'service_team' => $game->getServiceTeam()?->getId(),
+            'game_status' => $game->getStatus(),
+            'winner_name' => $game->getWinnerTeam()?->getName(),
+        ]));
+
+    }
     #[Route('/game/{id}', name: 'app_game_view', methods: ['GET'])]
     public function game(Game $game): Response
     {
         $teams = $game->getTeams();
         $team1 = $teams->first() ?? null;
         $team2 = $teams->last() ?? null;
+        $setsTeam1 = 0;
+        $setsTeam2 = 0;
+        
+        foreach ($game->getManches() as $manche) {
+            if ($manche->getWinnerTeam() === $team1) $setsTeam1++;
+            if ($manche->getWinnerTeam() === $team2) $setsTeam2++;
+        }
 
         $currentManche = null;
         foreach ($game->getManches() as $manche) {
-    if ($manche->getStatus() === 'in_progress') {
-        $currentManche = $manche;
-        break;
-    }
-}
+            if ($manche->getStatus() === 'in_progress') {
+                $currentManche = $manche;
+                break;
+            }
+        }
 
-return $this->render('game/view.html.twig', [
-    'game' => $game,
-    'team1' => $team1,
-    'team2' => $team2,
-    'currentManche' => $currentManche, // ← corrigé
-]);
+        return $this->render('game/view.html.twig', [
+            'game'          => $game,
+            'team1'         => $team1,
+            'team2'         => $team2,
+            'currentManche' => $currentManche,
+            'setsTeam1'     => $setsTeam1,
+            'setsTeam2'     => $setsTeam2,
+        ]);
     }
 }
