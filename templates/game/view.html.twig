@@ -247,7 +247,7 @@
 
 
 {# ── MODAL SERVICE INITIAL ── #}
-<div id="modal-service" class="modal-backdrop">
+<div id="modal-service" class="modal-backdrop {{ game.serviceTeam ? 'hidden' : '' }}">
     <div class="modal-card">
         <h2 style="font-size: 17px; font-weight: 700; text-align: center; margin-bottom: 6px;">Qui commence le service ?</h2>
         <p style="font-size: 13px; color: #64748b; text-align: center; margin-bottom: 20px;">Sélectionne l'équipe qui sert en premier</p>
@@ -425,6 +425,21 @@
                     cursor: pointer;
                 "
             >➕ Ajouter un set</button>
+            <a
+            href="{{ path('app_home') }}"
+            style="
+                display: block;
+                padding: 14px;
+                border-radius: 14px;
+                background: rgba(255,255,255,0.04);
+                border: 1px solid rgba(255,255,255,0.08);
+                color: #64748b;
+                font-size: 14px;
+                font-weight: 600;
+                text-decoration: none;
+                text-align: center;
+            "
+        >🏠 Retour à l'accueil</a>
         </div>
 
     </div>
@@ -435,7 +450,7 @@
     let mancheId  = {{ currentManche.id }};
     const team1Id = {{ team1.id }};
     const team2Id = {{ team2.id }};
-    let serviceTeam = null;
+    let serviceTeam = {{ game.serviceTeam ? game.serviceTeam.id : 'null' }};
 
     let courtPlayers = {
         1: [
@@ -477,7 +492,9 @@
         .then(r => r.json())
         .then(data => {
             serviceTeam = data.service_team_id;
+            if (serviceTeam) {
             updateService(serviceTeam);
+        }
             document.getElementById('modal-service').classList.add('hidden');
         });
     }
@@ -570,7 +587,6 @@
     if (data.game_status === 'finished') {
         openEndGame(data.winner_name, data.sets_team1, data.sets_team2);
     }
-     console.log('game_status:', data.game_status, 'winner:', data.winner_name);
 }
 
     function openSubstitution() {
@@ -658,17 +674,22 @@
     }
 
     function openStats() {
-        document.getElementById('layer-stats').classList.remove('hidden');
-        fetch(`/game/${gameId}/stats`)
-        .then(r => r.json())
-        .then(data => renderStats(data));
-    }
+    document.getElementById('layer-stats').classList.remove('hidden');
+    fetch(`/game/${gameId}/stats`)
+    .then(r => r.json())
+    .then(data => {
+        console.log('stats:', data);
+        renderStats(data);
+    })
+    .catch(err => console.error('Erreur stats:', err));
+}
 
     function closeStats() {
         document.getElementById('layer-stats').classList.add('hidden');
     }
 
     function renderStats(data) {
+        console.log('stats data:', data);
     const container = document.getElementById('stats-content');
     container.innerHTML = '';
 

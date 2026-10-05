@@ -41,6 +41,9 @@ class Manche
     #[ORM\OneToMany(targetEntity: Point::class, mappedBy: 'manche', orphanRemoval: true)]
     private Collection $points;
 
+    #[ORM\ManyToOne(inversedBy: 'startingServices')]
+    private ?Team $startingServiceTeam = null;
+
     public function __construct()
     {
         $this->points = new ArrayCollection();
@@ -156,6 +159,18 @@ class Manche
                 $point->setManche(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getStartingServiceTeam(): ?Team
+    {
+        return $this->startingServiceTeam;
+    }
+
+    public function setStartingServiceTeam(?Team $startingServiceTeam): static
+    {
+        $this->startingServiceTeam = $startingServiceTeam;
 
         return $this;
     }

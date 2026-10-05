@@ -112,6 +112,14 @@ final class GameController extends AbstractController
         }
 
         $game->setServiceTeam($serviceTeam);
+
+        // Enregistre aussi sur la première manche
+        $firstManche = $game->getManches()->first();
+        if ($firstManche) {
+            $firstManche->setStartingServiceTeam($serviceTeam);
+            $entityManager->persist($firstManche);
+        }
+
         $entityManager->persist($game);
         $entityManager->flush();
 
@@ -133,7 +141,7 @@ final class GameController extends AbstractController
         $game->setStatus('in_progress');
         $game->setWinnerTeam(null);
         $entityManager->persist($game);
-        $entityManager->flush();
+
         // Créer un nouveau set
         $manche = new Manche();
         $manche->setGame($game);
@@ -178,13 +186,14 @@ final class GameController extends AbstractController
             }
         }
 
-        return $this->render('game/view.html.twig', [
-            'game'          => $game,
-            'team1'         => $team1,
-            'team2'         => $team2,
-            'currentManche' => $currentManche,
-            'setsTeam1'     => $setsTeam1,
-            'setsTeam2'     => $setsTeam2,
-        ]);
+       return $this->render('game/view.html.twig', [
+    'game'          => $game,
+    'team1'         => $team1,
+    'team2'         => $team2,
+    'currentManche' => $currentManche,
+    'setsTeam1'     => $setsTeam1,
+    'setsTeam2'     => $setsTeam2,
+    'serviceTeam'   => $game->getServiceTeam(),
+]);
     }
 }

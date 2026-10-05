@@ -65,6 +65,12 @@ class Team
     #[ORM\OneToMany(targetEntity: Game::class, mappedBy: 'serviceTeam', orphanRemoval: true)]
     private Collection $games_service;
 
+    /**
+     * @var Collection<int, Manche>
+     */
+    #[ORM\OneToMany(targetEntity: Manche::class, mappedBy: 'startingServiceTeam')]
+    private Collection $startingServices;
+
     public function __construct()
     {
         $this->games = new ArrayCollection();
@@ -72,6 +78,7 @@ class Team
         $this->manches = new ArrayCollection();
         $this->points = new ArrayCollection();
         $this->games_service = new ArrayCollection();
+        $this->startingServices = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -250,6 +257,36 @@ class Team
             // set the owning side to null (unless already changed)
             if ($gamesService->getServiceTeam() === $this) {
                 $gamesService->setServiceTeam(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Manche>
+     */
+    public function getStartingServices(): Collection
+    {
+        return $this->startingServices;
+    }
+
+    public function addStartingService(Manche $startingService): static
+    {
+        if (!$this->startingServices->contains($startingService)) {
+            $this->startingServices->add($startingService);
+            $startingService->setStartingServiceTeam($this);
+        }
+
+        return $this;
+    }
+
+    public function removeStartingService(Manche $startingService): static
+    {
+        if ($this->startingServices->removeElement($startingService)) {
+            // set the owning side to null (unless already changed)
+            if ($startingService->getStartingServiceTeam() === $this) {
+                $startingService->setStartingServiceTeam(null);
             }
         }
 
