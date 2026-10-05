@@ -444,7 +444,61 @@
 
     </div>
 </div>
+{# ── MODAL MENU ── #}
+<div id="modal-menu" class="modal-backdrop hidden">
+    <div class="modal-card" style="text-align: center;">
 
+        <h2 style="font-size: 17px; font-weight: 700; margin-bottom: 20px;">Menu</h2>
+
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+
+            <a
+                href="/game/{{ game.id }}/pdf"
+                target="_blank"
+                style="
+                    display: block;
+                    padding: 14px;
+                    border-radius: 14px;
+                    background: rgba(167,139,250,0.15);
+                    border: 1px solid rgba(167,139,250,0.3);
+                    color: #a78bfa;
+                    font-size: 14px;
+                    font-weight: 600;
+                    text-decoration: none;
+                "
+            >📄 Télécharger le PDF</a>
+
+            <button
+                onclick="endMatch()"
+                style="
+                    padding: 14px;
+                    border-radius: 14px;
+                    background: rgba(239,68,68,0.1);
+                    border: 1px solid rgba(239,68,68,0.3);
+                    color: #f87171;
+                    font-size: 14px;
+                    font-weight: 600;
+                    cursor: pointer;
+                "
+            >🏁 Terminer le match</button>
+
+            <button
+                onclick="closeMenu()"
+                style="
+                    padding: 11px;
+                    border-radius: 12px;
+                    border: none;
+                    background: rgba(255,255,255,0.04);
+                    color: #64748b;
+                    font-size: 13px;
+                    cursor: pointer;
+                "
+            >Fermer</button>
+
+        </div>
+
+    </div>
+</div>
 <script>
     const gameId  = {{ game.id }};
     let mancheId  = {{ currentManche.id }};
@@ -955,7 +1009,27 @@ function continueMatch() {
         document.getElementById('modal-end-game').classList.add('hidden');
     });
 }
-    function openMenu()        { }
+function openMenu() {
+    document.getElementById('modal-menu').classList.remove('hidden');
+}
+
+function closeMenu() {
+    document.getElementById('modal-menu').classList.add('hidden');
+}
+
+function endMatch() {
+    if (confirm('Terminer le match définitivement ?')) {
+        fetch(`/game/${gameId}/end`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(r => r.json())
+        .then(data => {
+            closeMenu();
+            openEndGame(data.winner_name ?? '-', data.sets_team1, data.sets_team2);
+        });
+    }
+}
 </script>
 
 {% endblock %}

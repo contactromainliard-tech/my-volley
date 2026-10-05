@@ -187,13 +187,40 @@ final class GameController extends AbstractController
         }
 
        return $this->render('game/view.html.twig', [
-    'game'          => $game,
-    'team1'         => $team1,
-    'team2'         => $team2,
-    'currentManche' => $currentManche,
-    'setsTeam1'     => $setsTeam1,
-    'setsTeam2'     => $setsTeam2,
-    'serviceTeam'   => $game->getServiceTeam(),
-]);
+        'game'          => $game,
+        'team1'         => $team1,
+        'team2'         => $team2,
+        'currentManche' => $currentManche,
+        'setsTeam1'     => $setsTeam1,
+        'setsTeam2'     => $setsTeam2,
+        'serviceTeam'   => $game->getServiceTeam(),
+    ]);
     }
+    #[Route('/game/{gameId}/end', name: 'app_game_end', methods: ['POST'])]
+public function endGame(int $gameId, EntityManagerInterface $entityManager): JsonResponse
+{
+    $game = $entityManager->getRepository(Game::class)->find($gameId);
+
+    if (!$game) {
+        return new JsonResponse(['error' => 'Game not found'], 404);
+    }
+
+    $game->setStatus('finished');
+    $entityManager->persist($game);
+    $entityManager->flush();
+
+    $teams = $game->getTeams();
+    $team1 = $teams->first();
+    $team2 = $teams->last();
+
+    $setsTeam1 = $game->getManches()->filter(fn($m) => $m->getWinnerTeam() === $team1)->count();
+    $setsTeam2 = $game->getManches()->filter(fn($m) => $m->getWinnerTeam() === $team2)->count();
+
+    return new JsonResponse([
+        'message'    => 'Game ended',
+        'sets_team1' => $setsTeam1,
+        'sets_team2' => $setsTeam2,
+        'winner_name' => $game->getWinnerTeam()?->getName(),
+    ]);
+}
 }

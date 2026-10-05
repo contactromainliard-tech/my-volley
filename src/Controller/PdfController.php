@@ -39,14 +39,23 @@ final class PdfController extends AbstractController
         $points = array_merge($points, $manchePoints);
         }
 
-
+        // Organiser les points par manche
+        $pointsByManche = [];
+        foreach ($gameScores as $manche) {
+            $manchePoints = $entityManager->getRepository(Point::class)->findBy([
+                'manche'       => $manche,
+                'is_cancelled' => false,
+            ], ['sequence_number' => 'ASC']);
+            $pointsByManche[$manche->getId()] = $manchePoints;
+        }
         // Rendu du template HTML
         $html = $this->renderView('pdf/match.html.twig', [
-        'game'    => $game,
-        'teams'   => $gameTeam,
-        'manches' => $gameScores,
-        'players' => $gamePlayers,
-        'points'  => $points,
+            'game'            => $game,
+            'teams'           => $gameTeam,
+            'manches'         => $gameScores,
+            'players'         => $gamePlayers,
+            'points'          => $points,
+            'pointsByManche'  => $pointsByManche,
         ]);
 
         // Génération du PDF avec DomPDF
