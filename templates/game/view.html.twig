@@ -272,7 +272,7 @@
     /* ── MOBILE PORTRAIT ── */
     @media (max-width: 768px) and (orientation: portrait) {
         body { overflow: auto !important; }
-
+        header button { display: none !important; }
         .app-container {
             height: auto !important;
             min-height: 100vh !important;
@@ -281,9 +281,11 @@
         }
 
         main {
-            flex-direction: column !important;
-            align-items: stretch !important;
-            gap: 10px !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        justify-content: flex-start !important;
+        gap: 10px !important;
+        overflow: visible !important;
         }
 
         header {
@@ -359,13 +361,17 @@
     /* ── MOBILE LANDSCAPE ── */
     @media (max-width: 900px) and (orientation: landscape) {
         body { overflow: hidden !important; }
-
+        
+        header button { display: none !important; }
+        
         .app-container {
-            height: 100vh !important;
-            min-height: unset !important;
-            overflow: hidden !important;
-            padding: 6px 12px !important;
-            gap: 6px !important;
+        height: 100vh !important;
+        min-height: unset !important;
+        overflow: hidden !important;
+        padding: 6px 12px 6px !important;
+        gap: 4px !important;
+        display: flex !important;
+        flex-direction: column !important;
         }
 
         header {
@@ -384,10 +390,8 @@
         header > div:nth-child(2) > div span { font-size: 18px !important; }
 
         main {
-            flex-direction: row !important;
-            align-items: stretch !important;
-            gap: 8px !important;
-            flex: 1 !important;
+        flex: 1 !important;
+        min-height: 0 !important;
         }
 
         .team-card {
