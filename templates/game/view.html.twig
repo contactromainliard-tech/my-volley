@@ -292,10 +292,12 @@
             flex-wrap: nowrap !important;
             gap: 6px !important;
         }
-        header > div:nth-child(2) {
-            flex: 1 !important;
-            justify-content: center !important;
-        }
+        header > div:first-child { display: none !important; }
+header button { display: none !important; }
+header > div:nth-child(2) {
+    width: 100% !important;
+    justify-content: center !important;
+}
         header > div:nth-child(2) span {
             font-size: 12px !important;
             white-space: nowrap !important;
@@ -361,9 +363,7 @@
     /* ── MOBILE LANDSCAPE ── */
     @media (max-width: 900px) and (orientation: landscape) {
         body { overflow: hidden !important; }
-        
-        header button { display: none !important; }
-        
+                
         .app-container {
         height: 100vh !important;
         min-height: unset !important;
@@ -373,22 +373,22 @@
         display: flex !important;
         flex-direction: column !important;
         }
-
         header {
             height: 40px !important;
             flex-shrink: 0 !important;
             padding: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
         }
-        header > div:first-child > div:first-child {
-            width: 28px !important;
-            height: 28px !important;
-            font-size: 14px !important;
-        }
-        header span { font-size: 14px !important; }
-        header button { padding: 5px 10px !important; font-size: 11px !important; }
-        header > div:nth-child(2) span { font-size: 12px !important; }
-        header > div:nth-child(2) > div span { font-size: 18px !important; }
 
+        header > div:first-child { display: none !important; }
+        header button { display: none !important; }
+        header > div:nth-child(2) {
+            width: 100% !important;
+            justify-content: center !important;
+            display: flex !important;
+        }
         main {
         flex: 1 !important;
         min-height: 0 !important;
