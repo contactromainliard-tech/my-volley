@@ -272,7 +272,8 @@
     /* ── MOBILE PORTRAIT ── */
     @media (max-width: 768px) and (orientation: portrait) {
         body { overflow: auto !important; }
-        header button { display: none !important; }
+
+
         .app-container {
             height: auto !important;
             min-height: 100vh !important;
@@ -293,11 +294,11 @@
             gap: 6px !important;
         }
         header > div:first-child { display: none !important; }
-header button { display: none !important; }
-header > div:nth-child(2) {
-    width: 100% !important;
-    justify-content: center !important;
-}
+        header button { display: none !important; }
+        header > div:nth-child(2) {
+            width: 100% !important;
+            justify-content: center !important;
+        }
         header > div:nth-child(2) span {
             font-size: 12px !important;
             white-space: nowrap !important;
@@ -361,98 +362,105 @@ header > div:nth-child(2) {
     }
 
     /* ── MOBILE LANDSCAPE ── */
-    @media (max-width: 900px) and (orientation: landscape) {
-        body { overflow: hidden !important; }
-                
-        .app-container {
-        height: 100vh !important;
-        min-height: unset !important;
-        overflow: hidden !important;
-        padding: 6px 12px 6px !important;
-        gap: 4px !important;
-        display: flex !important;
-        flex-direction: column !important;
-        }
-        header {
-            height: 40px !important;
-            flex-shrink: 0 !important;
-            padding: 0 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-        }
+        @media (max-width: 900px) and (orientation: landscape) {
+            body { overflow: hidden !important; }
 
-        header > div:first-child { display: none !important; }
-        header button { display: none !important; }
-        header > div:nth-child(2) {
-            width: 100% !important;
-            justify-content: center !important;
-            display: flex !important;
-        }
-        main {
-        flex: 1 !important;
-        min-height: 0 !important;
-        }
+            .app-container {
+                height: 100vh !important;
+                min-height: unset !important;
+                overflow: hidden !important;
+                padding: 6px 12px !important;
+                gap: 4px !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+            }
 
-        .team-card {
-            height: 100% !important;
-            flex-direction: column !important;
-            padding: 10px !important;
-            gap: 6px !important;
-            flex: 1 !important;
-        }
-        .team-card .score-inner {
-            flex: 1 !important;
-            padding: 6px !important;
-        }
-        .team-score { font-size: 55px !important; }
-        .team-name { font-size: 13px !important; }
-        .team-icon {
-            width: 32px !important;
-            height: 32px !important;
-            font-size: 16px !important;
-        }
+            header {
+                height: 36px !important;
+                flex-shrink: 0 !important;
+                padding: 0 !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+            header > div:first-child { display: none !important; }
+            header button { display: none !important; }
+            header > div:nth-child(2) {
+                width: 100% !important;
+                justify-content: center !important;
+                display: flex !important;
+            }
 
-        .btn-plus {
-            width: 100% !important;
-            height: 36px !important;
-            border-radius: 10px !important;
-            font-size: 15px !important;
-        }
+            main {
+                flex: 1 !important;
+                min-height: 0 !important;
+                display: flex !important;
+                flex-direction: row !important;
+                align-items: stretch !important;
+                gap: 8px !important;
+                overflow: hidden !important;
+            }
 
-        #center-panel {
-            flex-direction: column !important;
-            width: 130px !important;
-            gap: 8px !important;
-            flex-shrink: 0 !important;
-        }
-        .manche-box { padding: 4px 12px !important; }
-        .manche-box p:first-child { font-size: 8px !important; }
-        .manche-box p:last-child { font-size: 22px !important; }
-        .service-ball {
-            width: 46px !important;
-            height: 46px !important;
-            font-size: 22px !important;
-        }
+            .team-card {
+                flex: 1 !important;
+                flex-direction: column !important;
+                padding: 8px !important;
+                gap: 6px !important;
+                height: auto !important;
+            }
+            .team-card .score-inner {
+                flex: 1 !important;
+                padding: 6px !important;
+            }
+            .team-score { font-size: 50px !important; }
+            .team-name { font-size: 12px !important; }
+            .team-icon {
+                width: 30px !important;
+                height: 30px !important;
+                font-size: 14px !important;
+            }
+            .btn-plus {
+                width: 100% !important;
+                height: 34px !important;
+                border-radius: 10px !important;
+                font-size: 14px !important;
+            }
 
-        .action-bar {
-            position: relative !important;
-            bottom: unset !important;
-            border-radius: 12px !important;
-            padding: 6px 12px !important;
-            flex-shrink: 0 !important;
+            #center-panel {
+                flex-direction: column !important;
+                width: 120px !important;
+                flex-shrink: 0 !important;
+                gap: 6px !important;
+                justify-content: center !important;
+            }
+            .manche-box { padding: 4px 10px !important; }
+            .manche-box p:first-child { font-size: 8px !important; }
+            .manche-box p:last-child { font-size: 20px !important; }
+            .service-ball {
+                width: 44px !important;
+                height: 44px !important;
+                font-size: 20px !important;
+            }
+
+            .action-bar {
+                flex-shrink: 0 !important;
+                position: relative !important;
+                bottom: unset !important;
+                border-radius: 10px !important;
+                padding: 5px 10px !important;
+            }
+            .btn-action {
+                font-size: 10px !important;
+                gap: 2px !important;
+                padding: 2px 6px !important;
+            }
+            .btn-action svg {
+                width: 16px !important;
+                height: 16px !important;
+            }
+            .action-divider { height: 18px !important; }
         }
-        .btn-action {
-            font-size: 10px !important;
-            gap: 2px !important;
-            padding: 2px 6px !important;
-        }
-        .btn-action svg {
-            width: 18px !important;
-            height: 18px !important;
-        }
-        .action-divider { height: 20px !important; }
-    }
 </style>
 
 <div class="arena-bg"></div>
