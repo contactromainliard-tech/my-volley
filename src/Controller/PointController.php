@@ -209,83 +209,91 @@ final class PointController extends AbstractController
     }
 
     #[Route('/game/{gameId}/stats', name: 'app_stats', methods: ['GET'])]
-    public function getStats(int $gameId, EntityManagerInterface $entityManager): JsonResponse
-    {
-        $game = $entityManager->getRepository(Game::class)->find($gameId);
-        if (!$game) {
-            return new JsonResponse(['error' => 'Game not found'], 404);
-        }
+public function getStats(int $gameId, EntityManagerInterface $entityManager): JsonResponse
+{
+    $game = $entityManager->getRepository(Game::class)->find($gameId);
+    if (!$game) {
+        return new JsonResponse(['error' => 'Game not found'], 404);
+    }
 
-        $teams = $game->getTeams();
-        $team1 = $teams->first();
-        $team2 = $teams->last();
+    $teams = $game->getTeams();
+    $team1 = $teams->first();
+    $team2 = $teams->last();
 
-        $result = [];
+    $result = [];
 
-        foreach ([$team1, $team2] as $team) {
-            $teamData = [
-                'team_name' => $team->getName(),
-                'players'   => [],
-                'faults'    => 0,
-            ];
+    foreach ([$team1, $team2] as $team) {
+        $teamData = [
+            'team_name' => $team->getName(),
+            'players'   => [],
+            'faults'    => 0,
+        ];
 
-            $gamePlayers = $entityManager->getRepository(GamePlayer::class)->findBy([
-                'game' => $game,
-                'team' => $team,
+        $gamePlayers = $entityManager->getRepository(GamePlayer::class)->findBy([
+            'game' => $game,
+            'team' => $team,
+        ]);
+
+        foreach ($gamePlayers as $gp) {
+            $player = $gp->getPlayer();
+            $points = $entityManager->getRepository(\App\Entity\Point::class)->findBy([
+                'player'       => $player,
+                'team'         => $team,
+                'is_cancelled' => false,
             ]);
 
-            foreach ($gamePlayers as $gp) {
-                $player = $gp->getPlayer();
-                $points = $entityManager->getRepository(\App\Entity\Point::class)->findBy([
-                    'player'       => $player,
-                    'team'         => $team,
-                    'is_cancelled' => false,
-                ]);
-
-                $stats = ['ace' => 0, 'attack' => 0, 'block' => 0];
-                foreach ($points as $point) {
-                    if (isset($stats[$point->getType()])) {
-                        $stats[$point->getType()]++;
-                    }
-                }
-
-                $total = array_sum($stats);
-                if ($total > 0) {
-                    $teamData['players'][] = [
-                        'name'   => $player->getName(),
-                        'ace'    => $stats['ace'],
-                        'attack' => $stats['attack'],
-                        'block'  => $stats['block'],
-                        'total'  => $total,
-                    ];
+            $stats = ['ace' => 0, 'attack' => 0, 'block' => 0];
+            foreach ($points as $point) {
+                if (isset($stats[$point->getType()])) {
+                    $stats[$point->getType()]++;
                 }
             }
 
-            $result[] = $teamData;
-        }
-
-        // Fautes de team1 → affichées dans section team1
-        $faultsTeam1 = $entityManager->getRepository(\App\Entity\Point::class)->findBy([
-            'team'         => $team1,
-            'is_cancelled' => false,
-        ]);
-        foreach ($faultsTeam1 as $point) {
-            if ($point->getType() === 'fault') {
-                $result[0]['faults']++;
+            $total = array_sum($stats);
+            if ($total > 0) {
+                $teamData['players'][] = [
+                    'name'   => $player->getName(),
+                    'ace'    => $stats['ace'],
+                    'attack' => $stats['attack'],
+                    'block'  => $stats['block'],
+                    'total'  => $total,
+                ];
             }
         }
 
-        // Fautes de team2 → affichées dans section team2
-        $faultsTeam2 = $entityManager->getRepository(\App\Entity\Point::class)->findBy([
-            'team'         => $team2,
-            'is_cancelled' => false,
-        ]);
-        foreach ($faultsTeam2 as $point) {
-            if ($point->getType() === 'fault') {
-                $result[1]['faults']++;
-            }
-        }
-
-        return new JsonResponse($result);
+        $result[] = $teamData;
     }
+
+    // Fautes de team1
+    $result[0]['faults'] = 0;
+    $result[0]['faults_service'] = 0;
+    $result[0]['faults_attack'] = 0;
+
+    $faultsTeam1 = $entityManager->getRepository(\App\Entity\Point::class)->findBy([
+        'team'         => $team1,
+        'is_cancelled' => false,
+    ]);
+    foreach ($faultsTeam1 as $point) {
+        if ($point->getType() === 'fault') $result[0]['faults']++;
+        if ($point->getType() === 'fault_service') $result[0]['faults_service']++;
+        if ($point->getType() === 'fault_attack') $result[0]['faults_attack']++;
+    }
+
+    // Fautes de team2
+    $result[1]['faults'] = 0;
+    $result[1]['faults_service'] = 0;
+    $result[1]['faults_attack'] = 0;
+
+    $faultsTeam2 = $entityManager->getRepository(\App\Entity\Point::class)->findBy([
+        'team'         => $team2,
+        'is_cancelled' => false,
+    ]);
+    foreach ($faultsTeam2 as $point) {
+        if ($point->getType() === 'fault') $result[1]['faults']++;
+        if ($point->getType() === 'fault_service') $result[1]['faults_service']++;
+        if ($point->getType() === 'fault_attack') $result[1]['faults_attack']++;
+    }
+
+    return new JsonResponse($result);
+}
 }

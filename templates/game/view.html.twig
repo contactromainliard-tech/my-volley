@@ -612,11 +612,13 @@
     <div class="modal-card">
         <h2 style="font-size: 17px; font-weight: 700; text-align: center; margin-bottom: 20px;" id="modal-title">Type de point</h2>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;" id="step-type">
-            <button class="modal-btn" onclick="selectType('ace')">🎯 Ace</button>
-            <button class="modal-btn" onclick="selectType('attack')">⚡ Attaque</button>
-            <button class="modal-btn" onclick="selectType('block')">🛡️ Block</button>
-            <button class="modal-btn" onclick="selectType('fault')">❌ Faute</button>
-        </div>
+    <button class="modal-btn" onclick="selectType('ace')">🎯 Ace</button>
+    <button class="modal-btn" onclick="selectType('attack')">⚡ Attaque</button>
+    <button class="modal-btn" onclick="selectType('block')">🛡️ Block</button>
+    <button class="modal-btn" onclick="selectType('fault')">❌ Faute</button>
+    <button class="modal-btn" onclick="selectType('fault_service')">🏐 Faute service</button>
+    <button class="modal-btn" onclick="selectType('fault_attack')">💥 Faute attaque</button>
+</div>
         <div id="step-player" class="hidden">
             <p style="font-size: 13px; color: #64748b; text-align: center; margin-bottom: 12px;">Qui a marqué ?</p>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;" id="players-list"></div>
@@ -808,19 +810,22 @@
     function closeModal() { document.getElementById('modal-point').classList.add('hidden'); }
 
     function selectType(type) {
-        currentType = type;
-        if (type === 'fault') { submitPoint(null); return; }
-        const list = document.getElementById('players-list');
-        list.innerHTML = '';
-        courtPlayers[currentTeam].forEach(p => {
-            const btn = document.createElement('button');
-            btn.className = 'player-btn'; btn.textContent = p.name;
-            btn.onclick = () => submitPoint(p.id); list.appendChild(btn);
-        });
-        document.getElementById('step-type').classList.add('hidden');
-        document.getElementById('step-player').classList.remove('hidden');
-        document.getElementById('modal-title').textContent = 'Joueur';
+    currentType = type;
+    if (type === 'fault' || type === 'fault_service' || type === 'fault_attack') {
+        submitPoint(null);
+        return;
     }
+    const list = document.getElementById('players-list');
+    list.innerHTML = '';
+    courtPlayers[currentTeam].forEach(p => {
+        const btn = document.createElement('button');
+        btn.className = 'player-btn'; btn.textContent = p.name;
+        btn.onclick = () => submitPoint(p.id); list.appendChild(btn);
+    });
+    document.getElementById('step-type').classList.add('hidden');
+    document.getElementById('step-player').classList.remove('hidden');
+    document.getElementById('modal-title').textContent = 'Joueur';
+}
 
     function submitPoint(playerId) {
         fetch(`/game/${gameId}/add-point`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -995,9 +1000,23 @@ function posSelectPlayer(player) {
                 });
                 row.appendChild(name); row.appendChild(stats); section.appendChild(row);
             });
-            const faultRow = document.createElement('div'); faultRow.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 12px; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.15); margin-top: 6px;';
-            faultRow.innerHTML = `<span style="font-size: 13px; color: #f87171;">❌ Fautes adverses</span><span style="font-size: 16px; font-weight: 700; color: #f87171;">${team.faults}</span>`;
-            section.appendChild(faultRow); container.appendChild(section);
+            const faultRow = document.createElement('div');
+faultRow.style.cssText = 'margin-top: 8px; display: flex; flex-direction: column; gap: 6px;';
+faultRow.innerHTML = `
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 12px; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.15);">
+        <span style="font-size: 13px; color: #f87171;">❌ Fautes reçues</span>
+        <span style="font-size: 16px; font-weight: 700; color: #f87171;">${team.faults}</span>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 12px; background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.1);">
+        <span style="font-size: 13px; color: #fca5a5;">🏐 Fautes service</span>
+        <span style="font-size: 16px; font-weight: 700; color: #fca5a5;">${team.faults_service}</span>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 12px; background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.1);">
+        <span style="font-size: 13px; color: #fca5a5;">💥 Fautes attaque</span>
+        <span style="font-size: 16px; font-weight: 700; color: #fca5a5;">${team.faults_attack}</span>
+    </div>
+`;
+section.appendChild(faultRow); container.appendChild(section);
         });
     }
 
