@@ -618,25 +618,56 @@
 </div>
 
 
-{# ── MODAL REMPLACEMENT ── #}
+{# ── MODAL REMPLACEMENT / CHANGEMENT POSITION ── #}
 <div id="modal-substitution" class="modal-backdrop hidden">
     <div class="modal-card">
-        <h2 style="font-size: 17px; font-weight: 700; text-align: center; margin-bottom: 20px;" id="sub-title">Remplacement</h2>
-        <div id="sub-step-team">
+        <h2 style="font-size: 17px; font-weight: 700; text-align: center; margin-bottom: 20px;" id="sub-title">Action joueur</h2>
+
+        {# Étape 0 : choix du type d'action #}
+        <div id="sub-step-action">
+            <p style="font-size: 13px; color: #64748b; text-align: center; margin-bottom: 12px;">Que veux-tu faire ?</p>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button class="modal-btn" onclick="subChooseAction('substitution')">🔄 Remplacement</button>
+                <button class="modal-btn" onclick="subChooseAction('position')">📍 Changement de position</button>
+            </div>
+        </div>
+
+        {# Étape 1 : choix de l'équipe (remplacement) #}
+        <div id="sub-step-team" class="hidden">
             <p style="font-size: 13px; color: #64748b; text-align: center; margin-bottom: 12px;">Quelle équipe ?</p>
             <div style="display: flex; flex-direction: column; gap: 10px;">
                 <button class="modal-btn" style="color: #f87171;" onclick="subSelectTeam(1)">{{ team1.name }}</button>
                 <button class="modal-btn" style="color: #60a5fa;" onclick="subSelectTeam(2)">{{ team2.name }}</button>
             </div>
         </div>
+
+        {# Étape 2 : joueur qui sort (remplacement) #}
         <div id="sub-step-out" class="hidden">
             <p style="font-size: 13px; color: #64748b; text-align: center; margin-bottom: 12px;">Joueur qui sort ?</p>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;" id="sub-players-out"></div>
         </div>
+
+        {# Étape 3 : joueur qui entre (remplacement) #}
         <div id="sub-step-in" class="hidden">
             <p style="font-size: 13px; color: #64748b; text-align: center; margin-bottom: 12px;">Joueur qui entre ?</p>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;" id="sub-players-in"></div>
         </div>
+
+        {# Étape 1 : choix de l'équipe (changement position) #}
+        <div id="pos-step-team" class="hidden">
+            <p style="font-size: 13px; color: #64748b; text-align: center; margin-bottom: 12px;">Quelle équipe ?</p>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button class="modal-btn" style="color: #f87171;" onclick="posSelectTeam(1)">{{ team1.name }}</button>
+                <button class="modal-btn" style="color: #60a5fa;" onclick="posSelectTeam(2)">{{ team2.name }}</button>
+            </div>
+        </div>
+
+        {# Étape 2 : sélection des deux joueurs à swapper #}
+        <div id="pos-step-players" class="hidden">
+            <p style="font-size: 13px; color: #64748b; text-align: center; margin-bottom: 4px;" id="pos-instruction">Sélectionne le 1er joueur</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;" id="pos-players-list"></div>
+        </div>
+
         <button class="modal-btn-cancel" onclick="closeSubstitution()">Annuler</button>
     </div>
 </div>
@@ -730,7 +761,7 @@
         2: [ {% for gp in team2.gamePlayers %}{% if not gp.isOnCourt %}{ id: {{ gp.player.id }}, name: "{{ gp.player.name }}" },{% endif %}{% endfor %} ]
     };
 
-    let currentTeam = null, currentType = null, subTeam = null, subPlayerOut = null;
+    let currentTeam = null, currentType = null, subTeam = null, subPlayerOut = null, subAction = null, posTeam = null, posPlayer1 = null;
 
     if (serviceTeam) updateService(serviceTeam);
 
@@ -805,54 +836,131 @@
         if (data.game_status === 'finished') openEndGame(data.winner_name, data.sets_team1, data.sets_team2);
     }
 
-    function openSubstitution() {
-        subTeam = null; subPlayerOut = null;
+
+function openSubstitution() {
+    subTeam = null; subPlayerOut = null; subAction = null; posTeam = null; posPlayer1 = null;
+    document.getElementById('sub-step-action').classList.remove('hidden');
+    document.getElementById('sub-step-team').classList.add('hidden');
+    document.getElementById('sub-step-out').classList.add('hidden');
+    document.getElementById('sub-step-in').classList.add('hidden');
+    document.getElementById('pos-step-team').classList.add('hidden');
+    document.getElementById('pos-step-players').classList.add('hidden');
+    document.getElementById('sub-title').textContent = 'Action joueur';
+    document.getElementById('modal-substitution').classList.remove('hidden');
+}
+
+function closeSubstitution() { document.getElementById('modal-substitution').classList.add('hidden'); }
+
+function subChooseAction(action) {
+    subAction = action;
+    document.getElementById('sub-step-action').classList.add('hidden');
+    if (action === 'substitution') {
         document.getElementById('sub-step-team').classList.remove('hidden');
-        document.getElementById('sub-step-out').classList.add('hidden');
-        document.getElementById('sub-step-in').classList.add('hidden');
         document.getElementById('sub-title').textContent = 'Remplacement';
-        document.getElementById('modal-substitution').classList.remove('hidden');
+    } else {
+        document.getElementById('pos-step-team').classList.remove('hidden');
+        document.getElementById('sub-title').textContent = 'Changement de position';
     }
-    function closeSubstitution() { document.getElementById('modal-substitution').classList.add('hidden'); }
+}
 
-    function subSelectTeam(teamNumber) {
-        subTeam = teamNumber;
-        const list = document.getElementById('sub-players-out'); list.innerHTML = '';
-        courtPlayers[teamNumber].forEach(p => { const btn = document.createElement('button'); btn.className = 'player-btn'; btn.textContent = p.name; btn.onclick = () => subSelectOut(p.id); list.appendChild(btn); });
-        document.getElementById('sub-step-team').classList.add('hidden');
-        document.getElementById('sub-step-out').classList.remove('hidden');
-        document.getElementById('sub-title').textContent = 'Joueur qui sort';
+function subSelectTeam(teamNumber) {
+    subTeam = teamNumber;
+    const list = document.getElementById('sub-players-out'); list.innerHTML = '';
+    courtPlayers[teamNumber].forEach(p => {
+        const btn = document.createElement('button');
+        btn.className = 'player-btn'; btn.textContent = p.name;
+        btn.onclick = () => subSelectOut(p.id); list.appendChild(btn);
+    });
+    document.getElementById('sub-step-team').classList.add('hidden');
+    document.getElementById('sub-step-out').classList.remove('hidden');
+    document.getElementById('sub-title').textContent = 'Joueur qui sort';
+}
+
+function subSelectOut(playerId) {
+    subPlayerOut = playerId;
+    const allBench = [...benchPlayers[1], ...benchPlayers[2]];
+    const list = document.getElementById('sub-players-in'); list.innerHTML = '';
+    allBench.forEach(p => {
+        const btn = document.createElement('button');
+        btn.className = 'player-btn'; btn.textContent = p.name;
+        btn.onclick = () => subSelectIn(p.id); list.appendChild(btn);
+    });
+    document.getElementById('sub-step-out').classList.add('hidden');
+    document.getElementById('sub-step-in').classList.remove('hidden');
+    document.getElementById('sub-title').textContent = 'Joueur qui entre';
+}
+
+function subSelectIn(playerInId) {
+    fetch(`/game/${gameId}/player/substitution`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ team_id: subTeam === 1 ? team1Id : team2Id, player_out_id: subPlayerOut, player_in_id: playerInId })
+    }).then(r => r.json()).then(() => {
+        const teamNum = subTeam;
+        const outPlayer = courtPlayers[teamNum].find(p => p.id === subPlayerOut);
+        const inTeam = benchPlayers[1].find(p => p.id === playerInId) ? 1 : 2;
+        const inPlayer = benchPlayers[inTeam].find(p => p.id === playerInId);
+        courtPlayers[teamNum] = courtPlayers[teamNum].filter(p => p.id !== subPlayerOut);
+        benchPlayers[inTeam] = benchPlayers[inTeam].filter(p => p.id !== playerInId);
+        if (outPlayer) benchPlayers[teamNum].push(outPlayer);
+        if (inPlayer) courtPlayers[teamNum].push(inPlayer);
+        const outPosition = positionPlayers[teamNum].find(p => p.id === subPlayerOut)?.position;
+        positionPlayers[teamNum] = positionPlayers[teamNum].filter(p => p.id !== subPlayerOut);
+        if (inPlayer && outPosition) positionPlayers[teamNum].push({ id: inPlayer.id, name: inPlayer.name, position: outPosition });
+        closeSubstitution();
+    });
+}
+
+// ── CHANGEMENT DE POSITION ──
+function posSelectTeam(teamNumber) {
+    posTeam = teamNumber;
+    posPlayer1 = null;
+    renderPosPlayers();
+    document.getElementById('pos-step-team').classList.add('hidden');
+    document.getElementById('pos-step-players').classList.remove('hidden');
+    document.getElementById('sub-title').textContent = 'Changement de position';
+}
+
+function renderPosPlayers() {
+    const list = document.getElementById('pos-players-list'); list.innerHTML = '';
+    const color = posTeam === 1 ? '#f87171' : '#60a5fa';
+    courtPlayers[posTeam].forEach(p => {
+        const btn = document.createElement('button');
+        btn.className = 'player-btn';
+        btn.textContent = p.name;
+        btn.dataset.playerId = p.id;
+        if (posPlayer1 && posPlayer1.id === p.id) {
+            btn.style.background = `rgba(${posTeam === 1 ? '248,113,113' : '96,165,250'},0.3)`;
+            btn.style.borderColor = color;
+            btn.style.color = color;
+        }
+        btn.onclick = () => posSelectPlayer(p);
+        list.appendChild(btn);
+    });
+    document.getElementById('pos-instruction').textContent =
+        posPlayer1 ? `${posPlayer1.name} sélectionné — choisis avec qui swapper` : 'Sélectionne le 1er joueur';
+}
+
+function posSelectPlayer(player) {
+    if (!posPlayer1) {
+        posPlayer1 = player;
+        renderPosPlayers();
+    } else {
+        if (posPlayer1.id === player.id) {
+            posPlayer1 = null;
+            renderPosPlayers();
+            return;
+        }
+        // Swap des positions
+        const p1 = positionPlayers[posTeam].find(p => p.id === posPlayer1.id);
+        const p2 = positionPlayers[posTeam].find(p => p.id === player.id);
+        if (p1 && p2) {
+            const tmp = p1.position;
+            p1.position = p2.position;
+            p2.position = tmp;
+            savePositions(posTeam);
+        }
+        closeSubstitution();
     }
-
-    function subSelectOut(playerId) {
-        subPlayerOut = playerId;
-        const allBench = [...benchPlayers[1], ...benchPlayers[2]];
-        const list = document.getElementById('sub-players-in'); list.innerHTML = '';
-        allBench.forEach(p => { const btn = document.createElement('button'); btn.className = 'player-btn'; btn.textContent = p.name; btn.onclick = () => subSelectIn(p.id); list.appendChild(btn); });
-        document.getElementById('sub-step-out').classList.add('hidden');
-        document.getElementById('sub-step-in').classList.remove('hidden');
-        document.getElementById('sub-title').textContent = 'Joueur qui entre';
-    }
-
-    function subSelectIn(playerInId) {
-        fetch(`/game/${gameId}/player/substitution`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ team_id: subTeam === 1 ? team1Id : team2Id, player_out_id: subPlayerOut, player_in_id: playerInId })
-        }).then(r => r.json()).then(() => {
-            const teamNum = subTeam;
-            const outPlayer = courtPlayers[teamNum].find(p => p.id === subPlayerOut);
-            const inTeam = benchPlayers[1].find(p => p.id === playerInId) ? 1 : 2;
-            const inPlayer = benchPlayers[inTeam].find(p => p.id === playerInId);
-            courtPlayers[teamNum] = courtPlayers[teamNum].filter(p => p.id !== subPlayerOut);
-            benchPlayers[inTeam] = benchPlayers[inTeam].filter(p => p.id !== playerInId);
-            if (outPlayer) benchPlayers[teamNum].push(outPlayer);
-            if (inPlayer) courtPlayers[teamNum].push(inPlayer);
-            const outPosition = positionPlayers[teamNum].find(p => p.id === subPlayerOut)?.position;
-            positionPlayers[teamNum] = positionPlayers[teamNum].filter(p => p.id !== subPlayerOut);
-            if (inPlayer && outPosition) positionPlayers[teamNum].push({ id: inPlayer.id, name: inPlayer.name, position: outPosition });
-            closeSubstitution();
-        });
-    }
-
+}
     function rollback() {
         fetch(`/game/${gameId}/rollback`, { method: 'POST' }).then(r => r.json()).then(data => updateScore(data));
     }
