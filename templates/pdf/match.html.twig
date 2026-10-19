@@ -170,75 +170,75 @@
         </tr>
     </table>
 
+    {# Timeline par manche #}
+    <div class="section-title">Déroulement du match</div>
 
-   {# Timeline par manche #}
-<div class="section-title">Déroulement du match</div>
+    {% for manche in manches %}
+        {% set manchePoints = pointsByManche[manche.id] ?? [] %}
+        {% if manchePoints|length > 0 %}
+            {% set score1 = manchePoints|filter(p => p.team.id == teams[0].id)|length %}
+            {% set score2 = manchePoints|filter(p => p.team.id == teams[1].id)|length %}
 
-{% for manche in manches %}
-    {% set manchePoints = pointsByManche[manche.id] ?? [] %}
-    {% if manchePoints|length > 0 %}
-        {% set score1 = manchePoints|filter(p => p.team.id == teams[0].id)|length %}
-        {% set score2 = manchePoints|filter(p => p.team.id == teams[1].id)|length %}
+            <div class="manche-block">
 
-        <div class="manche-block">
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px;">
+                    <tr>
+                        <td style="width: 60px; font-size: 11px; font-weight: bold;">Manche {{ manche.number }}</td>
+                        <td style="width: 40px; text-align: center; background: #2980b9; color: white; font-weight: bold; font-size: 13px; padding: 4px; border-radius: 3px;">{{ score1 }}</td>
+                        <td style="width: 8px;"></td>
+                        <td style="width: 40px; text-align: center; background: #c0392b; color: white; font-weight: bold; font-size: 13px; padding: 4px; border-radius: 3px;">{{ score2 }}</td>
+                        <td style="font-size: 10px; color: #666; padding-left: 8px;">
+                            {% if manche.winnerTeam %}
+                                Victoire {{ manche.winnerTeam.name }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
 
-            {# En-tête manche #}
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px;">
-                <tr>
-                    <td style="width: 60px; font-size: 11px; font-weight: bold;">Manche {{ manche.number }}</td>
-                    <td style="width: 40px; text-align: center; background: #2980b9; color: white; font-weight: bold; font-size: 13px; padding: 4px; border-radius: 3px;">{{ score1 }}</td>
-                    <td style="width: 8px;"></td>
-                    <td style="width: 40px; text-align: center; background: #c0392b; color: white; font-weight: bold; font-size: 13px; padding: 4px; border-radius: 3px;">{{ score2 }}</td>
-                    <td style="font-size: 10px; color: #666; padding-left: 8px;">
-                        {% if manche.winnerTeam %}
-                            Victoire {{ manche.winnerTeam.name }}
+                <div style="margin-bottom: 4px; font-size: 8px; color: #666;">
+                    <span style="background: #2980b9; color: white; padding: 1px 4px; border-radius: 2px; margin-right: 4px;">{{ teams[0].name|slice(0,8) }}</span>
+                    <span style="background: #c0392b; color: white; padding: 1px 4px; border-radius: 2px;">{{ teams[1].name|slice(0,8) }}</span>
+                </div>
+
+                <div class="timeline-row">
+                    {% set cumul1 = 0 %}
+                    {% set cumul2 = 0 %}
+                    {% for point in manchePoints %}
+                        {% if point.team.id == teams[0].id %}
+                            {% set cumul1 = cumul1 + 1 %}
+                            <span class="point-cell">
+                                <span class="point-number" style="background: #2980b9;">{{ cumul1 }}</span>
+                                <span class="point-type" style="color: #2980b9;">
+                                    {% if point.type == 'ace' %}S
+                                    {% elseif point.type == 'attack' %}A
+                                    {% elseif point.type == 'block' %}B
+                                    {% elseif point.type == 'fault' %}F
+                                    {% elseif point.type == 'fault_service' %}FS
+                                    {% elseif point.type == 'fault_attack' %}FA
+                                    {% endif %}
+                                </span>
+                            </span>
+                        {% else %}
+                            {% set cumul2 = cumul2 + 1 %}
+                            <span class="point-cell">
+                                <span class="point-number" style="background: #c0392b;">{{ cumul2 }}</span>
+                                <span class="point-type" style="color: #c0392b;">
+                                    {% if point.type == 'ace' %}S
+                                    {% elseif point.type == 'attack' %}A
+                                    {% elseif point.type == 'block' %}B
+                                    {% elseif point.type == 'fault' %}F
+                                    {% elseif point.type == 'fault_service' %}FS
+                                    {% elseif point.type == 'fault_attack' %}FA
+                                    {% endif %}
+                                </span>
+                            </span>
                         {% endif %}
-                    </td>
-                </tr>
-            </table>
+                    {% endfor %}
+                </div>
 
-            {# Timeline chronologique #}
-            <div style="margin-bottom: 4px; font-size: 8px; color: #666;">
-                <span style="background: #2980b9; color: white; padding: 1px 4px; border-radius: 2px; margin-right: 4px;">{{ teams[0].name|slice(0,8) }}</span>
-                <span style="background: #c0392b; color: white; padding: 1px 4px; border-radius: 2px;">{{ teams[1].name|slice(0,8) }}</span>
             </div>
-
-            <div class="timeline-row">
-                {% set cumul1 = 0 %}
-                {% set cumul2 = 0 %}
-                {% for point in manchePoints %}
-                    {% if point.team.id == teams[0].id %}
-                        {% set cumul1 = cumul1 + 1 %}
-                        <span class="point-cell">
-                            <span class="point-number" style="background: #2980b9;">{{ cumul1 }}</span>
-                            <span class="point-type" style="color: #2980b9;">
-                                {% if point.type == 'ace' %}S
-                                {% elseif point.type == 'attack' %}A
-                                {% elseif point.type == 'block' %}B
-                                {% elseif point.type == 'fault' %}F
-                                {% endif %}
-                            </span>
-                        </span>
-                    {% else %}
-                        {% set cumul2 = cumul2 + 1 %}
-                        <span class="point-cell">
-                            <span class="point-number" style="background: #c0392b;">{{ cumul2 }}</span>
-                            <span class="point-type" style="color: #c0392b;">
-                                {% if point.type == 'ace' %}S
-                                {% elseif point.type == 'attack' %}A
-                                {% elseif point.type == 'block' %}B
-                                {% elseif point.type == 'fault' %}F
-                                {% endif %}
-                            </span>
-                        </span>
-                    {% endif %}
-                {% endfor %}
-            </div>
-
-        </div>
-    {% endif %}
-{% endfor %}
-
+        {% endif %}
+    {% endfor %}
 
     {# Stats équipe 1 #}
     <div class="section-title team1-color">{{ teams[0].name }} — Statistiques</div>
@@ -246,10 +246,12 @@
         <thead>
             <tr>
                 <th>Joueur</th>
-                <th>Service (S)</th>
+                <th>Ace (S)</th>
                 <th>Attaque (A)</th>
                 <th>Block (B)</th>
-                <th>Faute adv. (F)</th>
+                <th>Faute (F)</th>
+                <th>F. Service</th>
+                <th>F. Attaque</th>
                 <th>Total</th>
             </tr>
         </thead>
@@ -269,11 +271,27 @@
                         <td class="center">{{ attack }}</td>
                         <td class="center">{{ block }}</td>
                         <td class="center">{{ fault }}</td>
+                        <td class="center">—</td>
+                        <td class="center">—</td>
                         <td class="center"><strong>{{ total }}</strong></td>
                     </tr>
                     {% endif %}
                 {% endif %}
             {% endfor %}
+            {% set teamFaultService = points|filter(p => p.team.id == teams[0].id and p.type == 'fault_service')|length %}
+            {% set teamFaultAttack  = points|filter(p => p.team.id == teams[0].id and p.type == 'fault_attack')|length %}
+            {% if teamFaultService > 0 or teamFaultAttack > 0 %}
+            <tr style="background: #fff5f5;">
+                <td><em>Équipe adverse</em></td>
+                <td class="center">—</td>
+                <td class="center">—</td>
+                <td class="center">—</td>
+                <td class="center">—</td>
+                <td class="center">{{ teamFaultService }}</td>
+                <td class="center">{{ teamFaultAttack }}</td>
+                <td class="center"><strong>{{ teamFaultService + teamFaultAttack }}</strong></td>
+            </tr>
+            {% endif %}
         </tbody>
     </table>
 
@@ -283,10 +301,12 @@
         <thead>
             <tr>
                 <th>Joueur</th>
-                <th>Service (S)</th>
+                <th>Ace (S)</th>
                 <th>Attaque (A)</th>
                 <th>Block (B)</th>
-                <th>Faute adv. (F)</th>
+                <th>Faute (F)</th>
+                <th>F. Service</th>
+                <th>F. Attaque</th>
                 <th>Total</th>
             </tr>
         </thead>
@@ -306,17 +326,33 @@
                         <td class="center">{{ attack }}</td>
                         <td class="center">{{ block }}</td>
                         <td class="center">{{ fault }}</td>
+                        <td class="center">—</td>
+                        <td class="center">—</td>
                         <td class="center"><strong>{{ total }}</strong></td>
                     </tr>
                     {% endif %}
                 {% endif %}
             {% endfor %}
+            {% set teamFaultService = points|filter(p => p.team.id == teams[1].id and p.type == 'fault_service')|length %}
+            {% set teamFaultAttack  = points|filter(p => p.team.id == teams[1].id and p.type == 'fault_attack')|length %}
+            {% if teamFaultService > 0 or teamFaultAttack > 0 %}
+            <tr style="background: #fff5f5;">
+                <td><em>Équipe adverse</em></td>
+                <td class="center">—</td>
+                <td class="center">—</td>
+                <td class="center">—</td>
+                <td class="center">—</td>
+                <td class="center">{{ teamFaultService }}</td>
+                <td class="center">{{ teamFaultAttack }}</td>
+                <td class="center"><strong>{{ teamFaultService + teamFaultAttack }}</strong></td>
+            </tr>
+            {% endif %}
         </tbody>
     </table>
 
     {# Légende #}
     <div style="margin-top: 12px; font-size: 9px; color: #666; border-top: 1px solid #ddd; padding-top: 6px;">
-        <strong>Légende :</strong> S = Service (Ace) &nbsp;|&nbsp; A = Attaque &nbsp;|&nbsp; B = Block &nbsp;|&nbsp; F = Faute adverse
+        <strong>Légende :</strong> S = Ace &nbsp;|&nbsp; A = Attaque &nbsp;|&nbsp; B = Block &nbsp;|&nbsp; F = Faute &nbsp;|&nbsp; FS = Faute service &nbsp;|&nbsp; FA = Faute attaque
     </div>
 
 </body>
