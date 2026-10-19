@@ -271,27 +271,20 @@
 
     /* ── MOBILE PORTRAIT ── */
     @media (max-width: 768px) and (orientation: portrait) {
-        body { overflow: auto !important; }
-
+        body { overflow: hidden !important; }
 
         .app-container {
-            height: auto !important;
-            min-height: 100dvh !important;
-            overflow: visible !important;
-            padding-bottom: 80px !important;
-        }
-
-        main {
-        flex-direction: column !important;
-        align-items: stretch !important;
-        justify-content: flex-start !important;
-        gap: 10px !important;
-        overflow: visible !important;
+            height: 100dvh !important;
+            min-height: unset !important;
+            overflow: hidden !important;
+            padding: 8px 12px 70px !important;
+            gap: 6px !important;
         }
 
         header {
             flex-wrap: nowrap !important;
             gap: 6px !important;
+            flex-shrink: 0 !important;
         }
         header > div:first-child { display: none !important; }
         header button { display: none !important; }
@@ -307,48 +300,63 @@
             max-width: 70px !important;
         }
 
-        .team-card {
-            height: auto !important;
+        main {
+            flex: 1 !important;
             flex-direction: column !important;
-            padding: 16px !important;
-            gap: 12px !important;
-            flex: 0 0 auto !important;
+            align-items: stretch !important;
+            gap: 6px !important;
+            overflow: hidden !important;
+            min-height: 0 !important;
+        }
+
+        .team-card {
+            flex: 1 !important;
+            min-height: 0 !important;
+            padding: 10px 14px !important;
+            gap: 6px !important;
         }
         .team-card .score-inner {
-            flex: 0 !important;
-            padding: 12px !important;
+            flex: 1 !important;
+            padding: 6px !important;
         }
-        .team-score { font-size: 72px !important; }
+        .team-score { font-size: 52px !important; }
+        .team-name { font-size: 14px !important; }
+        .team-icon {
+            width: 36px !important;
+            height: 36px !important;
+            font-size: 18px !important;
+        }
 
         .btn-plus {
             width: 100% !important;
-            height: 52px !important;
-            border-radius: 14px !important;
-            font-size: 20px !important;
+            height: 40px !important;
+            border-radius: 12px !important;
+            font-size: 18px !important;
+            flex-shrink: 0 !important;
         }
 
         #center-panel {
             flex-direction: column !important;
             width: 100% !important;
             align-items: center !important;
-            justify-content: center !important;
-            gap: 8px !important;
+            gap: 6px !important;
+            flex-shrink: 0 !important;
         }
         .center-panel {
             flex-direction: row !important;
             justify-content: center !important;
             align-items: center !important;
-            gap: 16px !important;
-            flex: 0 0 auto !important;
-            padding: 8px 0 !important;
+            gap: 12px !important;
+            flex-shrink: 0 !important;
             width: 100% !important;
         }
-       .manche-box { padding: 4px 10px !important; }
+        .manche-box { padding: 4px 12px !important; }
+        .manche-box p:first-child { font-size: 8px !important; }
         .manche-box p:last-child { font-size: 18px !important; }
         .service-ball {
-            width: 44px !important;
-            height: 44px !important;
-            font-size: 22px !important;
+            width: 42px !important;
+            height: 42px !important;
+            font-size: 20px !important;
         }
 
         .action-bar {
@@ -362,108 +370,108 @@
     }
 
     /* ── MOBILE LANDSCAPE ── */
-        @media (max-width: 1100px) and (orientation: landscape) {
-            body { 
-                overflow: hidden !important;
-                height: 100dvh !important;
-            }
-
-            .app-container {
-                height: 100dvh !important;
-                min-height: unset !important;
-                overflow: hidden !important;
-                padding: 6px 12px !important;
-                gap: 4px !important;
-                display: flex !important;
-                flex-direction: column !important;
-                justify-content: space-between !important;
-            }
-
-            header {
-                height: 36px !important;
-                flex-shrink: 0 !important;
-                padding: 0 !important;
-                display: flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-            }
-            header > div:first-child { display: none !important; }
-            header button { display: none !important; }
-            header > div:nth-child(2) {
-                width: 100% !important;
-                justify-content: center !important;
-                display: flex !important;
-            }
-
-            main {
-                flex: 1 !important;
-                min-height: 0 !important;
-                display: flex !important;
-                flex-direction: row !important;
-                align-items: stretch !important;
-                gap: 8px !important;
-                overflow: hidden !important;
-            }
-
-            .team-card {
-                flex: 1 !important;
-                flex-direction: column !important;
-                padding: 8px !important;
-                gap: 6px !important;
-                height: auto !important;
-            }
-            .team-card .score-inner {
-                flex: 1 !important;
-                padding: 6px !important;
-            }
-            .team-score { font-size: 50px !important; }
-            .team-name { font-size: 12px !important; }
-            .team-icon {
-                width: 30px !important;
-                height: 30px !important;
-                font-size: 14px !important;
-            }
-            .btn-plus {
-                width: 100% !important;
-                height: 34px !important;
-                border-radius: 10px !important;
-                font-size: 14px !important;
-            }
-
-            #center-panel {
-                flex-direction: column !important;
-                width: 120px !important;
-                flex-shrink: 0 !important;
-                gap: 6px !important;
-                justify-content: center !important;
-            }
-            .manche-box { padding: 4px 10px !important; }
-            .manche-box p:first-child { font-size: 8px !important; }
-            .manche-box p:last-child { font-size: 20px !important; }
-            .service-ball {
-                width: 44px !important;
-                height: 44px !important;
-                font-size: 20px !important;
-            }
-
-            .action-bar {
-                flex-shrink: 0 !important;
-                position: relative !important;
-                bottom: unset !important;
-                border-radius: 10px !important;
-                padding: 5px 10px !important;
-            }
-            .btn-action {
-                font-size: 10px !important;
-                gap: 2px !important;
-                padding: 2px 6px !important;
-            }
-            .btn-action svg {
-                width: 16px !important;
-                height: 16px !important;
-            }
-            .action-divider { height: 18px !important; }
+    @media (max-width: 1100px) and (orientation: landscape) {
+        body {
+            overflow: hidden !important;
+            height: 100dvh !important;
         }
+
+        .app-container {
+            height: 100dvh !important;
+            min-height: unset !important;
+            overflow: hidden !important;
+            padding: 6px 12px !important;
+            gap: 4px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
+        }
+
+        header {
+            height: 36px !important;
+            flex-shrink: 0 !important;
+            padding: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        header > div:first-child { display: none !important; }
+        header button { display: none !important; }
+        header > div:nth-child(2) {
+            width: 100% !important;
+            justify-content: center !important;
+            display: flex !important;
+        }
+
+        main {
+            flex: 1 !important;
+            min-height: 0 !important;
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: stretch !important;
+            gap: 8px !important;
+            overflow: hidden !important;
+        }
+
+        .team-card {
+            flex: 1 !important;
+            flex-direction: column !important;
+            padding: 8px !important;
+            gap: 6px !important;
+            height: auto !important;
+        }
+        .team-card .score-inner {
+            flex: 1 !important;
+            padding: 6px !important;
+        }
+        .team-score { font-size: 50px !important; }
+        .team-name { font-size: 12px !important; }
+        .team-icon {
+            width: 30px !important;
+            height: 30px !important;
+            font-size: 14px !important;
+        }
+        .btn-plus {
+            width: 100% !important;
+            height: 34px !important;
+            border-radius: 10px !important;
+            font-size: 14px !important;
+        }
+
+        #center-panel {
+            flex-direction: column !important;
+            width: 120px !important;
+            flex-shrink: 0 !important;
+            gap: 6px !important;
+            justify-content: center !important;
+        }
+        .manche-box { padding: 4px 10px !important; }
+        .manche-box p:first-child { font-size: 8px !important; }
+        .manche-box p:last-child { font-size: 20px !important; }
+        .service-ball {
+            width: 44px !important;
+            height: 44px !important;
+            font-size: 20px !important;
+        }
+
+        .action-bar {
+            flex-shrink: 0 !important;
+            position: relative !important;
+            bottom: unset !important;
+            border-radius: 10px !important;
+            padding: 5px 10px !important;
+        }
+        .btn-action {
+            font-size: 10px !important;
+            gap: 2px !important;
+            padding: 2px 6px !important;
+        }
+        .btn-action svg {
+            width: 16px !important;
+            height: 16px !important;
+        }
+        .action-divider { height: 18px !important; }
+    }
 </style>
 
 <div class="arena-bg"></div>
