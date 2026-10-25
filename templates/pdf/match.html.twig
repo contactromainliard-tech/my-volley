@@ -203,37 +203,44 @@
                 <div class="timeline-row">
                     {% set cumul1 = 0 %}
                     {% set cumul2 = 0 %}
-                    {% for point in manchePoints %}
-                        {% if point.team.id == teams[0].id %}
-                            {% set cumul1 = cumul1 + 1 %}
-                            <span class="point-cell">
-                                <span class="point-number" style="background: #2980b9;">{{ cumul1 }}</span>
-                                <span class="point-type" style="color: #2980b9;">
-                                    {% if point.type == 'ace' %}S
-                                    {% elseif point.type == 'attack' %}A
-                                    {% elseif point.type == 'block' %}B
-                                    {% elseif point.type == 'fault' %}F
-                                    {% elseif point.type == 'fault_service' %}FS
-                                    {% elseif point.type == 'fault_attack' %}FA
-                                    {% endif %}
-                                </span>
-                            </span>
-                        {% else %}
-                            {% set cumul2 = cumul2 + 1 %}
-                            <span class="point-cell">
-                                <span class="point-number" style="background: #c0392b;">{{ cumul2 }}</span>
-                                <span class="point-type" style="color: #c0392b;">
-                                    {% if point.type == 'ace' %}S
-                                    {% elseif point.type == 'attack' %}A
-                                    {% elseif point.type == 'block' %}B
-                                    {% elseif point.type == 'fault' %}F
-                                    {% elseif point.type == 'fault_service' %}FS
-                                    {% elseif point.type == 'fault_attack' %}FA
-                                    {% endif %}
-                                </span>
-                            </span>
-                        {% endif %}
-                    {% endfor %}
+                    {% set lastServer = null %}
+{% for point in manchePoints %}
+    {% if point.server and point.server.name != lastServer %}
+        <span style="display: inline-block; background: rgba(255,255,255,0.15); color: #333; font-size: 7px; font-weight: bold; padding: 2px 5px; border-radius: 3px; margin-right: 3px; vertical-align: top; margin-top: 4px;">
+            [S] {{ point.server.name }}
+        </span>
+        {% set lastServer = point.server.name %}
+    {% endif %}
+    {% if point.team.id == teams[0].id %}
+        {% set cumul1 = cumul1 + 1 %}
+        <span class="point-cell">
+            <span class="point-number" style="background: #2980b9;">{{ cumul1 }}</span>
+            <span class="point-type" style="color: #2980b9;">
+                {% if point.type == 'ace' %}S
+                {% elseif point.type == 'attack' %}A
+                {% elseif point.type == 'block' %}B
+                {% elseif point.type == 'fault' %}F
+                {% elseif point.type == 'fault_service' %}FS
+                {% elseif point.type == 'fault_attack' %}FA
+                {% endif %}
+            </span>
+        </span>
+    {% else %}
+        {% set cumul2 = cumul2 + 1 %}
+        <span class="point-cell">
+            <span class="point-number" style="background: #c0392b;">{{ cumul2 }}</span>
+            <span class="point-type" style="color: #c0392b;">
+                {% if point.type == 'ace' %}S
+                {% elseif point.type == 'attack' %}A
+                {% elseif point.type == 'block' %}B
+                {% elseif point.type == 'fault' %}F
+                {% elseif point.type == 'fault_service' %}FS
+                {% elseif point.type == 'fault_attack' %}FA
+                {% endif %}
+            </span>
+        </span>
+    {% endif %}
+{% endfor %}
                 </div>
 
             </div>
@@ -278,20 +285,21 @@
                     {% endif %}
                 {% endif %}
             {% endfor %}
-            {% set teamFaultService = points|filter(p => p.team.id == teams[0].id and p.type == 'fault_service')|length %}
-            {% set teamFaultAttack  = points|filter(p => p.team.id == teams[0].id and p.type == 'fault_attack')|length %}
-            {% if teamFaultService > 0 or teamFaultAttack > 0 %}
-            <tr style="background: #fff5f5;">
-                <td><em>Équipe adverse</em></td>
-                <td class="center">—</td>
-                <td class="center">—</td>
-                <td class="center">—</td>
-                <td class="center">—</td>
-                <td class="center">{{ teamFaultService }}</td>
-                <td class="center">{{ teamFaultAttack }}</td>
-                <td class="center"><strong>{{ teamFaultService + teamFaultAttack }}</strong></td>
-            </tr>
-            {% endif %}
+            {% set teamFault        = points|filter(p => p.player and p.player.id in team2PlayerIds and p.type == 'fault')|length %}
+{% set teamFaultService = points|filter(p => p.player and p.player.id in team2PlayerIds and p.type == 'fault_service')|length %}
+{% set teamFaultAttack  = points|filter(p => p.player and p.player.id in team2PlayerIds and p.type == 'fault_attack')|length %}
+{% if teamFault > 0 or teamFaultService > 0 or teamFaultAttack > 0 %}
+<tr style="background: #fff5f5;">
+    <td><em>Équipe adverse</em></td>
+    <td class="center">—</td>
+    <td class="center">—</td>
+    <td class="center">—</td>
+    <td class="center" style="color: #c0392b;">{{ teamFault }}</td>
+    <td class="center" style="color: #c0392b;">{{ teamFaultService }}</td>
+    <td class="center" style="color: #c0392b;">{{ teamFaultAttack }}</td>
+    <td class="center"><strong style="color: #c0392b;">{{ teamFault + teamFaultService + teamFaultAttack }}</strong></td>
+</tr>
+{% endif %}
         </tbody>
     </table>
 
@@ -333,20 +341,21 @@
                     {% endif %}
                 {% endif %}
             {% endfor %}
-            {% set teamFaultService = points|filter(p => p.team.id == teams[1].id and p.type == 'fault_service')|length %}
-            {% set teamFaultAttack  = points|filter(p => p.team.id == teams[1].id and p.type == 'fault_attack')|length %}
-            {% if teamFaultService > 0 or teamFaultAttack > 0 %}
-            <tr style="background: #fff5f5;">
-                <td><em>Équipe adverse</em></td>
-                <td class="center">—</td>
-                <td class="center">—</td>
-                <td class="center">—</td>
-                <td class="center">—</td>
-                <td class="center">{{ teamFaultService }}</td>
-                <td class="center">{{ teamFaultAttack }}</td>
-                <td class="center"><strong>{{ teamFaultService + teamFaultAttack }}</strong></td>
-            </tr>
-            {% endif %}
+            {% set teamFault        = points|filter(p => p.player and p.player.id in team1PlayerIds and p.type == 'fault')|length %}
+{% set teamFaultService = points|filter(p => p.player and p.player.id in team1PlayerIds and p.type == 'fault_service')|length %}
+{% set teamFaultAttack  = points|filter(p => p.player and p.player.id in team1PlayerIds and p.type == 'fault_attack')|length %}
+{% if teamFault > 0 or teamFaultService > 0 or teamFaultAttack > 0 %}
+<tr style="background: #fff5f5;">
+    <td><em>Équipe adverse</em></td>
+    <td class="center">—</td>
+    <td class="center">—</td>
+    <td class="center">—</td>
+    <td class="center" style="color: #c0392b;">{{ teamFault }}</td>
+    <td class="center" style="color: #c0392b;">{{ teamFaultService }}</td>
+    <td class="center" style="color: #c0392b;">{{ teamFaultAttack }}</td>
+    <td class="center"><strong style="color: #c0392b;">{{ teamFault + teamFaultService + teamFaultAttack }}</strong></td>
+</tr>
+{% endif %}
         </tbody>
     </table>
 

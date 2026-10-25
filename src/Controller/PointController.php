@@ -28,6 +28,8 @@ final class PointController extends AbstractController
         $manche = $entityManager->getRepository(Manche::class)->find($mancheId);
         $team = $entityManager->getRepository(Team::class)->find($teamId);
         $player = $playerId ? $entityManager->getRepository(Player::class)->find($playerId) : null;
+        $serverId = $data['server_id'] ?? null;
+        $server = $serverId ? $entityManager->getRepository(Player::class)->find($serverId) : null;
 
         if (!$game || !$manche || !$team || !$type) {
             throw $this->createNotFoundException('Game, Manche, Team or Player not found');
@@ -42,7 +44,7 @@ final class PointController extends AbstractController
         $point->setIsCancelled(false);
         $activePoints = $manche->getPoints()->filter(fn($p) => $p->isCancelled() === false);
         $point->setSequenceNumber(count($activePoints) + 1);
-
+        $point->setServer($server);
         $entityManager->persist($point);
         $entityManager->flush();
         $entityManager->refresh($manche);

@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\PointRepository;
 use Doctrine\ORM\Mapping as ORM;
+use App\Entity\Player;
 
 #[ORM\Entity(repositoryClass: PointRepository::class)]
 class Point
@@ -39,6 +40,10 @@ class Point
 
     #[ORM\Column]
     private ?\DateTime $created_at = null;
+    
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Player $server = null;
 
     public function getId(): ?int
     {
@@ -147,4 +152,14 @@ class Point
 
         return $this;
     }
+    public function getServer(): ?Player
+{
+    return $this->server;
+}
+
+public function setServer(?Player $server): static
+{
+    $this->server = $server;
+    return $this;
+}
 }
