@@ -811,20 +811,26 @@
 
     function selectType(type) {
     currentType = type;
-    if (type === 'fault' || type === 'fault_service' || type === 'fault_attack') {
-        submitPoint(null);
-        return;
-    }
     const list = document.getElementById('players-list');
     list.innerHTML = '';
-    courtPlayers[currentTeam].forEach(p => {
+
+    // Pour les fautes, on affiche les joueurs de l'équipe adverse
+    const faultTypes = ['fault', 'fault_service', 'fault_attack'];
+    const teamToShow = faultTypes.includes(type)
+        ? (currentTeam === 1 ? 2 : 1)
+        : currentTeam;
+
+    courtPlayers[teamToShow].forEach(p => {
         const btn = document.createElement('button');
         btn.className = 'player-btn'; btn.textContent = p.name;
         btn.onclick = () => submitPoint(p.id); list.appendChild(btn);
     });
+
     document.getElementById('step-type').classList.add('hidden');
     document.getElementById('step-player').classList.remove('hidden');
-    document.getElementById('modal-title').textContent = 'Joueur';
+
+    const label = faultTypes.includes(type) ? 'Qui a fait la faute ?' : 'Qui a marqué ?';
+    document.getElementById('modal-title').textContent = label;
 }
 
     function submitPoint(playerId) {
@@ -985,41 +991,104 @@ function posSelectPlayer(player) {
     function closeStats() { document.getElementById('layer-stats').classList.add('hidden'); }
 
     function renderStats(data) {
-        const container = document.getElementById('stats-content'); container.innerHTML = '';
-        data.forEach(team => {
-            const section = document.createElement('div'); section.style.cssText = 'margin-bottom: 24px;';
-            const title = document.createElement('p'); title.style.cssText = 'font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #a78bfa; margin-bottom: 12px;'; title.textContent = team.team_name; section.appendChild(title);
-            if (team.players.length === 0) { const empty = document.createElement('p'); empty.style.cssText = 'font-size: 12px; color: #475569; margin-bottom: 8px;'; empty.textContent = 'Aucun point marqué'; section.appendChild(empty); }
-            team.players.forEach(p => {
-                const row = document.createElement('div'); row.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,0.05); margin-bottom: 6px; border: 1px solid rgba(255,255,255,0.06);';
-                const name = document.createElement('span'); name.style.cssText = 'font-size: 13px; font-weight: 600; color: #e2e8f0; min-width: 80px;'; name.textContent = p.name;
-                const stats = document.createElement('div'); stats.style.cssText = 'display: flex; gap: 12px;';
-                [{ label: '🎯', value: p.ace, color: '#a78bfa' }, { label: '⚡', value: p.attack, color: '#60a5fa' }, { label: '🛡️', value: p.block, color: '#34d399' }].forEach(s => {
-                    const stat = document.createElement('div'); stat.style.cssText = 'display: flex; flex-direction: column; align-items: center; gap: 2px;';
-                    stat.innerHTML = `<span style="font-size: 10px;">${s.label}</span><span style="font-size: 14px; font-weight: 700; color: ${s.color};">${s.value}</span>`; stats.appendChild(stat);
-                });
-                row.appendChild(name); row.appendChild(stats); section.appendChild(row);
-            });
-            const faultRow = document.createElement('div');
-faultRow.style.cssText = 'margin-top: 8px; display: flex; flex-direction: column; gap: 6px;';
-faultRow.innerHTML = `
-    <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 12px; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.15);">
-        <span style="font-size: 13px; color: #f87171;">❌ Fautes reçues</span>
-        <span style="font-size: 16px; font-weight: 700; color: #f87171;">${team.faults}</span>
-    </div>
-    <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 12px; background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.1);">
-        <span style="font-size: 13px; color: #fca5a5;">🏐 Fautes service</span>
-        <span style="font-size: 16px; font-weight: 700; color: #fca5a5;">${team.faults_service}</span>
-    </div>
-    <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 12px; background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.1);">
-        <span style="font-size: 13px; color: #fca5a5;">💥 Fautes attaque</span>
-        <span style="font-size: 16px; font-weight: 700; color: #fca5a5;">${team.faults_attack}</span>
-    </div>
-`;
-section.appendChild(faultRow); container.appendChild(section);
-        });
-    }
+    const container = document.getElementById('stats-content');
+    container.innerHTML = '';
 
+    // Toggle fautes nominatives
+    const toggleRow = document.createElement('div');
+    toggleRow.style.cssText = 'display: flex; align-items: center; gap: 10px; margin-bottom: 16px; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);';
+    toggleRow.innerHTML = `
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: #e2e8f0;">
+            <input type="checkbox" id="toggle-faults" checked style="width: 16px; height: 16px; cursor: pointer;">
+            Afficher les fautes nominatives
+        </label>
+    `;
+    container.appendChild(toggleRow);
+
+    document.getElementById('toggle-faults').addEventListener('change', function() {
+        document.querySelectorAll('.fault-detail').forEach(el => {
+            el.style.display = this.checked ? '' : 'none';
+        });
+    });
+
+    data.forEach(team => {
+        const section = document.createElement('div');
+        section.style.cssText = 'margin-bottom: 24px;';
+
+        const title = document.createElement('p');
+        title.style.cssText = 'font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #a78bfa; margin-bottom: 12px;';
+        title.textContent = team.team_name;
+        section.appendChild(title);
+
+        if (team.players.length === 0) {
+            const empty = document.createElement('p');
+            empty.style.cssText = 'font-size: 12px; color: #475569; margin-bottom: 8px;';
+            empty.textContent = 'Aucun point marqué';
+            section.appendChild(empty);
+        }
+
+        team.players.forEach(p => {
+            const row = document.createElement('div');
+            row.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,0.05); margin-bottom: 6px; border: 1px solid rgba(255,255,255,0.06);';
+
+            const name = document.createElement('span');
+            name.style.cssText = 'font-size: 13px; font-weight: 600; color: #e2e8f0; min-width: 80px;';
+            name.textContent = p.name;
+
+            const stats = document.createElement('div');
+            stats.style.cssText = 'display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end;';
+
+            // Points positifs
+            [
+                { label: '🎯', value: p.ace, color: '#a78bfa' },
+                { label: '⚡', value: p.attack, color: '#60a5fa' },
+                { label: '🛡️', value: p.block, color: '#34d399' }
+            ].forEach(s => {
+                const stat = document.createElement('div');
+                stat.style.cssText = 'display: flex; flex-direction: column; align-items: center; gap: 2px;';
+                stat.innerHTML = `<span style="font-size: 10px;">${s.label}</span><span style="font-size: 14px; font-weight: 700; color: ${s.color};">${s.value}</span>`;
+                stats.appendChild(stat);
+            });
+
+            // Fautes nominatives
+            [
+                { label: '❌', value: p.fault, color: '#f87171' },
+                { label: '🏐', value: p.fault_service, color: '#fca5a5' },
+                { label: '💥', value: p.fault_attack, color: '#fca5a5' }
+            ].forEach(s => {
+                const stat = document.createElement('div');
+                stat.className = 'fault-detail';
+                stat.style.cssText = 'display: flex; flex-direction: column; align-items: center; gap: 2px;';
+                stat.innerHTML = `<span style="font-size: 10px;">${s.label}</span><span style="font-size: 14px; font-weight: 700; color: ${s.color};">${s.value}</span>`;
+                stats.appendChild(stat);
+            });
+
+            row.appendChild(name);
+            row.appendChild(stats);
+            section.appendChild(row);
+        });
+
+        // Totaux fautes équipe
+        const faultRow = document.createElement('div');
+        faultRow.style.cssText = 'margin-top: 8px; display: flex; flex-direction: column; gap: 6px;';
+        faultRow.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 12px; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.15);">
+                <span style="font-size: 13px; color: #f87171;">❌ Fautes</span>
+                <span style="font-size: 16px; font-weight: 700; color: #f87171;">${team.faults}</span>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 12px; background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.1);">
+                <span style="font-size: 13px; color: #fca5a5;">🏐 Fautes de service</span>
+                <span style="font-size: 16px; font-weight: 700; color: #fca5a5;">${team.faults_service}</span>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 12px; background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.1);">
+                <span style="font-size: 13px; color: #fca5a5;">💥 Fautes d'attaque</span>
+                <span style="font-size: 16px; font-weight: 700; color: #fca5a5;">${team.faults_attack}</span>
+            </div>
+        `;
+        section.appendChild(faultRow);
+        container.appendChild(section);
+    });
+}
     const positionsTeam1 = { 5: { left: '14%', top: '25%' }, 6: { left: '14%', top: '50%' }, 1: { left: '14%', top: '75%' }, 4: { left: '38%', top: '25%' }, 3: { left: '38%', top: '50%' }, 2: { left: '38%', top: '75%' } };
     const positionsTeam2 = { 2: { left: '55%', top: '25%' }, 3: { left: '55%', top: '50%' }, 4: { left: '55%', top: '75%' }, 1: { left: '79%', top: '25%' }, 6: { left: '79%', top: '50%' }, 5: { left: '79%', top: '75%' } };
 

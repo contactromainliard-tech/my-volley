@@ -224,9 +224,11 @@ public function getStats(int $gameId, EntityManagerInterface $entityManager): Js
 
     foreach ([$team1, $team2] as $team) {
         $teamData = [
-            'team_name' => $team->getName(),
-            'players'   => [],
-            'faults'    => 0,
+            'team_name'      => $team->getName(),
+            'players'        => [],
+            'faults'         => 0,
+            'faults_service' => 0,
+            'faults_attack'  => 0,
         ];
 
         $gamePlayers = $entityManager->getRepository(GamePlayer::class)->findBy([
@@ -236,6 +238,8 @@ public function getStats(int $gameId, EntityManagerInterface $entityManager): Js
 
         foreach ($gamePlayers as $gp) {
             $player = $gp->getPlayer();
+
+            // Points positifs du joueur pour son équipe
             $points = $entityManager->getRepository(\App\Entity\Point::class)->findBy([
                 'player'       => $player,
                 'team'         => $team,
@@ -249,49 +253,42 @@ public function getStats(int $gameId, EntityManagerInterface $entityManager): Js
                 }
             }
 
-            $total = array_sum($stats);
-            if ($total > 0) {
+            // Fautes commises par ce joueur (peu importe l'équipe qui a le point)
+            $allPlayerPoints = $entityManager->getRepository(\App\Entity\Point::class)->findBy([
+                'player'       => $player,
+                'is_cancelled' => false,
+            ]);
+
+            $faultStats = ['fault' => 0, 'fault_service' => 0, 'fault_attack' => 0];
+            foreach ($allPlayerPoints as $point) {
+                if (isset($faultStats[$point->getType()])) {
+                    $faultStats[$point->getType()]++;
+                }
+            }
+
+            $total      = array_sum($stats);
+            $totalFaults = array_sum($faultStats);
+
+            if ($total > 0 || $totalFaults > 0) {
                 $teamData['players'][] = [
-                    'name'   => $player->getName(),
-                    'ace'    => $stats['ace'],
-                    'attack' => $stats['attack'],
-                    'block'  => $stats['block'],
-                    'total'  => $total,
+                    'name'          => $player->getName(),
+                    'ace'           => $stats['ace'],
+                    'attack'        => $stats['attack'],
+                    'block'         => $stats['block'],
+                    'fault'         => $faultStats['fault'],
+                    'fault_service' => $faultStats['fault_service'],
+                    'fault_attack'  => $faultStats['fault_attack'],
+                    'total'         => $total,
                 ];
             }
+
+            // Cumul fautes équipe
+            $teamData['faults']         += $faultStats['fault'];
+            $teamData['faults_service'] += $faultStats['fault_service'];
+            $teamData['faults_attack']  += $faultStats['fault_attack'];
         }
 
         $result[] = $teamData;
-    }
-
-    // Fautes de team1
-    $result[0]['faults'] = 0;
-    $result[0]['faults_service'] = 0;
-    $result[0]['faults_attack'] = 0;
-
-    $faultsTeam1 = $entityManager->getRepository(\App\Entity\Point::class)->findBy([
-        'team'         => $team1,
-        'is_cancelled' => false,
-    ]);
-    foreach ($faultsTeam1 as $point) {
-        if ($point->getType() === 'fault') $result[0]['faults']++;
-        if ($point->getType() === 'fault_service') $result[0]['faults_service']++;
-        if ($point->getType() === 'fault_attack') $result[0]['faults_attack']++;
-    }
-
-    // Fautes de team2
-    $result[1]['faults'] = 0;
-    $result[1]['faults_service'] = 0;
-    $result[1]['faults_attack'] = 0;
-
-    $faultsTeam2 = $entityManager->getRepository(\App\Entity\Point::class)->findBy([
-        'team'         => $team2,
-        'is_cancelled' => false,
-    ]);
-    foreach ($faultsTeam2 as $point) {
-        if ($point->getType() === 'fault') $result[1]['faults']++;
-        if ($point->getType() === 'fault_service') $result[1]['faults_service']++;
-        if ($point->getType() === 'fault_attack') $result[1]['faults_attack']++;
     }
 
     return new JsonResponse($result);
