@@ -48,8 +48,11 @@ final class GamePlayerController extends AbstractController
             return new JsonResponse(['error' => 'GamePlayer not found'], 404);
         }
 
-        $gamePlayerOut->setIsOnCourt(false);
+        // Le joueur entrant reprend la position du sortant (nécessaire pour la rotation)
         $gamePlayerIn->setIsOnCourt(true);
+        $gamePlayerIn->setPosition($gamePlayerOut->getPosition());
+        $gamePlayerOut->setIsOnCourt(false);
+        $gamePlayerOut->setPosition(null);
         $entityManager->flush();
 
         return new JsonResponse([
@@ -58,7 +61,7 @@ final class GamePlayerController extends AbstractController
             'player_in_id'  => $playerIn->getId(),
         ]);
     }
-    #[Route('/game/{gameId}/player/substitution', name: 'app_game_substitution', methods: ['POST'])]
+    #[Route('/game/{gameId}/positions', name: 'app_game_positions', methods: ['POST'])]
     public function updatePositions(int $gameId, Request $request, EntityManagerInterface $entityManager): JsonResponse
 {
     $data    = json_decode($request->getContent(), true);

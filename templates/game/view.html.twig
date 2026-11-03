@@ -937,7 +937,7 @@
     }
 
     function subSelectIn(playerInId) {
-        fetch(`/game/${gameId}/player/substitution`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        fetch(`/game/${gameId}/substitution`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ team_id: subTeam === 1 ? team1Id : team2Id, player_out_id: subPlayerOut, player_in_id: playerInId })
         }).then(r => r.json()).then(() => {
             const teamNum = subTeam;
