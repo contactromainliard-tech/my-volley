@@ -73,6 +73,8 @@ final class PointController extends AbstractController
 
         $scoreTeam1 = $manche->getPoints()->filter(fn($p) => $p->getTeam() === $team1 && $p->isCancelled() === false)->count();
         $scoreTeam2 = $manche->getPoints()->filter(fn($p) => $p->getTeam() === $team2 && $p->isCancelled() === false)->count();
+        $manche->setScoreTeam1($scoreTeam1);
+        $manche->setScoreTeam2($scoreTeam2);
 
         $setsTeam1 = $game->getManches()->filter(fn($m) => $m->getWinnerTeam() === $team1)->count();
         $setsTeam2 = $game->getManches()->filter(fn($m) => $m->getWinnerTeam() === $team2)->count();
@@ -193,6 +195,10 @@ final class PointController extends AbstractController
         $scoreTeam2 = $currentManche->getPoints()->filter(fn($p) =>
             $p->getTeam() === $team2 && $p->isCancelled() === false
         )->count();
+
+        $currentManche->setScoreTeam1($scoreTeam1);
+        $currentManche->setScoreTeam2($scoreTeam2);
+        $entityManager->flush();
 
         $setsTeam1 = $game->getManches()->filter(fn($m) => $m->getWinnerTeam() === $team1)->count();
         $setsTeam2 = $game->getManches()->filter(fn($m) => $m->getWinnerTeam() === $team2)->count();
