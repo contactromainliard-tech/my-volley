@@ -784,6 +784,19 @@
 </div>
 
 
+{# ── MODAL COMPOSITION DE SET ── #}
+<div id="modal-lineup" class="modal-backdrop hidden">
+    <div class="modal-card" style="max-width: 360px;">
+        <h2 style="font-size: 17px; font-weight: 700; text-align: center; margin-bottom: 4px;" id="lineup-title">Composition</h2>
+        <p style="font-size: 13px; text-align: center; margin-bottom: 16px; font-weight: 700;" id="lineup-team"></p>
+        <p style="font-size: 11px; color: #64748b; text-align: center; margin-bottom: 6px;">Filet</p>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;" id="lineup-grid"></div>
+        <p id="lineup-error" class="hidden" style="font-size: 12px; color: #f87171; margin-top: 10px; text-align: center;"></p>
+        <button class="modal-btn" style="margin-top: 16px; color: #a78bfa; border-color: rgba(167,139,250,0.3); background: rgba(167,139,250,0.15);" onclick="submitLineup()">Valider</button>
+    </div>
+</div>
+
+
 <script>
     const gameId  = {{ game.id }};
     let mancheId  = {{ currentManche.id }};
@@ -900,19 +913,22 @@
     }
 
     function updateScore(data) {
+        // Nouveau set : la rotation est remplacée par une nouvelle composition
+        const newSet = data.manche_id !== mancheId;
         mancheId = data.manche_id;
         document.getElementById('score-team1').textContent = data.score_team1;
         document.getElementById('score-team2').textContent = data.score_team2;
         document.getElementById('sets-team1').textContent  = data.sets_team1;
         document.getElementById('sets-team2').textContent  = data.sets_team2;
         document.getElementById('manche-number').textContent = data.manche_number;
-        if (data.service_team !== serviceTeam) {
+        if (!newSet && data.service_team !== serviceTeam) {
             const teamNum = data.service_team === team1Id ? 1 : 2;
             positionPlayers[teamNum].forEach(p => { p.position = (p.position - 2 + 6) % 6 + 1; });
         }
         updateService(data.service_team);
         serviceTeam = data.service_team;
         if (data.game_status === 'finished') openEndGame(data.winner_name, data.sets_team1, data.sets_team2);
+        else if (newSet) openLineup();
     }
 
     function openSubstitution() {
@@ -1201,6 +1217,7 @@
             mancheId = data.manche_id;
             document.getElementById('manche-number').textContent = data.manche_number;
             document.getElementById('modal-end-game').classList.add('hidden');
+            openLineup();
         });
     }
 
@@ -1268,6 +1285,77 @@
     }
 
     document.getElementById('rename-input').addEventListener('keydown', e => { if (e.key === 'Enter') submitRename(); });
+
+    // Composition de début de set : chaque équipe redéfinit ses 6 joueurs et leurs positions
+    let lineupData = null, lineupTeam = null;
+    const lineupOrder = [4, 3, 2, 5, 6, 1]; // ligne avant puis ligne arrière, vue depuis le terrain
+
+    function openLineup() {
+        fetch(`/game/${gameId}/lineup`).then(r => r.json()).then(data => {
+            lineupData = data;
+            renderLineup(1);
+            document.getElementById('modal-lineup').classList.remove('hidden');
+        });
+    }
+
+    function renderLineup(teamNum) {
+        lineupTeam = teamNum;
+        const players = lineupData[teamNum === 1 ? team1Id : team2Id] ?? [];
+        const teamLabel = document.getElementById('lineup-team');
+        teamLabel.textContent = teamNum === 1 ? '{{ team1.name|e('js') }}' : '{{ team2.name|e('js') }}';
+        teamLabel.style.color = teamNum === 1 ? '#f87171' : '#60a5fa';
+        document.getElementById('lineup-title').textContent = `Composition du set ${document.getElementById('manche-number').textContent}`;
+        document.getElementById('lineup-error').classList.add('hidden');
+
+        const grid = document.getElementById('lineup-grid'); grid.innerHTML = '';
+        lineupOrder.forEach(pos => {
+            const cell = document.createElement('label');
+            cell.style.cssText = 'display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #64748b; text-align: center;';
+            cell.textContent = `Poste ${pos}${pos === 1 ? ' (service)' : ''}`;
+            const select = document.createElement('select');
+            select.dataset.position = pos;
+            select.style.cssText = 'width: 100%; padding: 10px 4px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: #0d1b35; color: #e2e8f0; font-size: 12px; font-weight: 600;';
+            select.add(new Option('—', ''));
+            players.forEach(p => select.add(new Option(p.name, p.id, false, p.on_court && p.position === pos)));
+            cell.appendChild(select);
+            grid.appendChild(cell);
+        });
+    }
+
+    function submitLineup() {
+        const error = document.getElementById('lineup-error');
+        const positions = [...document.querySelectorAll('#lineup-grid select')]
+            .map(s => ({ player_id: parseInt(s.value), position: parseInt(s.dataset.position) }));
+        const ids = positions.map(p => p.player_id).filter(id => !isNaN(id));
+        if (ids.length !== 6 || new Set(ids).size !== 6) {
+            error.textContent = 'Choisis 6 joueurs différents';
+            error.classList.remove('hidden');
+            return;
+        }
+        const teamId = lineupTeam === 1 ? team1Id : team2Id;
+        fetch(`/game/${gameId}/lineup`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ team_id: teamId, positions })
+        }).then(r => r.ok ? r.json() : r.json().then(d => Promise.reject(d.error))).then(() => {
+            // Mise à jour de l'état local avec la composition validée
+            lineupData[teamId].forEach(p => {
+                const chosen = positions.find(c => c.player_id === p.id);
+                p.on_court = !!chosen; p.position = chosen ? chosen.position : null;
+            });
+            courtPlayers[lineupTeam]    = lineupData[teamId].filter(p => p.on_court).map(p => ({ id: p.id, name: p.name }));
+            benchPlayers[lineupTeam]    = lineupData[teamId].filter(p => !p.on_court).map(p => ({ id: p.id, name: p.name }));
+            positionPlayers[lineupTeam] = lineupData[teamId].filter(p => p.on_court).map(p => ({ id: p.id, name: p.name, position: p.position }));
+            if (lineupTeam === 1) renderLineup(2);
+            else document.getElementById('modal-lineup').classList.add('hidden');
+        }).catch(msg => {
+            error.textContent = msg || 'Erreur lors de l\'enregistrement';
+            error.classList.remove('hidden');
+        });
+    }
+
+    // Rechargement de la page entre deux sets : la composition n'a pas encore été faite
+    {% if currentManche.number > 1 and currentManche.points|filter(p => not p.isCancelled)|length == 0 %}
+    openLineup();
+    {% endif %}
 
     function endMatch() {
         if (confirm('Terminer le match définitivement ?')) {

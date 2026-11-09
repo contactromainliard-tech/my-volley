@@ -98,6 +98,74 @@ final class GamePlayerController extends AbstractController
         ]);
     }
 
+    #[Route('/game/{gameId}/lineup', name: 'app_game_lineup', methods: ['GET'])]
+    public function getLineup(int $gameId, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $game = $entityManager->getRepository(Game::class)->find($gameId);
+
+        if (!$game) {
+            return new JsonResponse(['error' => 'Game not found'], 404);
+        }
+
+        // Joueurs de chaque équipe, indexés par id d'équipe
+        $result = [];
+        foreach ($game->getGamePlayers() as $gp) {
+            $result[$gp->getTeam()->getId()][] = [
+                'id'       => $gp->getPlayer()->getId(),
+                'name'     => $gp->getPlayer()->getName(),
+                'on_court' => (bool) $gp->isOnCourt(),
+                'position' => $gp->getPosition(),
+            ];
+        }
+
+        return new JsonResponse($result);
+    }
+
+    #[Route('/game/{gameId}/lineup', name: 'app_game_lineup_save', methods: ['POST'])]
+    public function saveLineup(int $gameId, Request $request, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $data      = json_decode($request->getContent(), true);
+        $teamId    = $data['team_id'] ?? null;
+        $positions = $data['positions'] ?? [];
+
+        $game = $entityManager->getRepository(Game::class)->find($gameId);
+        $team = $entityManager->getRepository(Team::class)->find($teamId);
+
+        if (!$game || !$team || $team->getGame() !== $game) {
+            return new JsonResponse(['error' => 'Game or Team not found'], 404);
+        }
+
+        // 6 joueurs distincts sur les positions 1 à 6
+        $byPlayer = [];
+        foreach ($positions as $p) {
+            $byPlayer[(int) ($p['player_id'] ?? 0)] = (int) ($p['position'] ?? 0);
+        }
+        $positionValues = array_values($byPlayer);
+        sort($positionValues);
+        if (count($positions) !== 6 || count($byPlayer) !== 6 || $positionValues !== [1, 2, 3, 4, 5, 6]) {
+            return new JsonResponse(['error' => 'Il faut 6 joueurs différents sur les positions 1 à 6'], 400);
+        }
+
+        $gamePlayers = $entityManager->getRepository(GamePlayer::class)->findBy([
+            'game' => $game,
+            'team' => $team,
+        ]);
+
+        $teamPlayerIds = array_map(fn($gp) => $gp->getPlayer()->getId(), $gamePlayers);
+        if (array_diff(array_keys($byPlayer), $teamPlayerIds)) {
+            return new JsonResponse(['error' => 'Player not in this team'], 400);
+        }
+
+        foreach ($gamePlayers as $gp) {
+            $position = $byPlayer[$gp->getPlayer()->getId()] ?? null;
+            $gp->setIsOnCourt($position !== null);
+            $gp->setPosition($position);
+        }
+        $entityManager->flush();
+
+        return new JsonResponse(['message' => 'Composition enregistrée']);
+    }
+
     #[Route('/game/{gameId}/positions', name: 'app_game_positions', methods: ['POST'])]
     public function updatePositions(int $gameId, Request $request, EntityManagerInterface $entityManager): JsonResponse
 {
