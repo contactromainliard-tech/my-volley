@@ -707,6 +707,7 @@
             <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 12px; height: 12px; border-radius: 50%; background: #f87171;"></div><span style="font-size: 12px; color: #94a3b8;">{{ team1.name }}</span></div>
             <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 12px; height: 12px; border-radius: 50%; background: #60a5fa;"></div><span style="font-size: 12px; color: #94a3b8;">{{ team2.name }}</span></div>
         </div>
+        <p style="font-size: 12px; color: #64748b; text-align: center; margin-top: 10px;">Glisse un joueur sur un autre poste pour les échanger, ou touche deux joueurs l'un après l'autre.</p>
     </div>
 </div>
 
@@ -1163,39 +1164,92 @@
     const positionsTeam1 = { 5: { left: '14%', top: '25%' }, 6: { left: '14%', top: '50%' }, 1: { left: '14%', top: '75%' }, 4: { left: '38%', top: '25%' }, 3: { left: '38%', top: '50%' }, 2: { left: '38%', top: '75%' } };
     const positionsTeam2 = { 2: { left: '55%', top: '25%' }, 3: { left: '55%', top: '50%' }, 4: { left: '55%', top: '75%' }, 1: { left: '79%', top: '25%' }, 6: { left: '79%', top: '50%' }, 5: { left: '79%', top: '75%' } };
 
-    let draggedPlayer = null, draggedTeam = null;
+    // Déplacement en pointer events : même code pour la souris et le doigt
+    let selectedChip = null; // joueur sélectionné par un simple toucher / clic
 
-    function openPositions() { renderPositions(); document.getElementById('modal-positions').classList.remove('hidden'); }
+    function openPositions() { selectedChip = null; renderPositions(); document.getElementById('modal-positions').classList.remove('hidden'); }
     function closePositions() { document.getElementById('modal-positions').classList.add('hidden'); }
     function renderPositions() { renderTeamPositions(1, 'positions-team1', positionsTeam1, '#f87171'); renderTeamPositions(2, 'positions-team2', positionsTeam2, '#60a5fa'); }
 
     function renderTeamPositions(teamNum, containerId, posMap, color) {
         const container = document.getElementById(containerId); container.innerHTML = '';
-        positionPlayers[teamNum].forEach(p => {
-            const pos = posMap[p.position]; if (!pos) return;
-            const el = document.createElement('div');
-            el.style.cssText = `position: absolute; left: ${pos.left}; top: ${pos.top}; transform: translate(-50%, -50%); background: ${color}; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: white; text-align: center; cursor: grab; box-shadow: 0 2px 8px rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.3); user-select: none; z-index: 10;`;
-            el.textContent = p.name.split(' ')[0]; el.draggable = true;
-            el.addEventListener('dragstart', e => { draggedPlayer = p; draggedTeam = teamNum; e.dataTransfer.effectAllowed = 'move'; });
-            container.appendChild(el);
-        });
+        // Les deux calques couvrent tout le terrain : seuls les zones et les joueurs captent le pointeur
+        container.style.pointerEvents = 'none';
         Object.entries(posMap).forEach(([pos, coords]) => {
             const zone = document.createElement('div');
-            zone.style.cssText = `position: absolute; left: ${coords.left}; top: ${coords.top}; transform: translate(-50%, -50%); width: 52px; height: 52px; border-radius: 50%; border: 2px dashed rgba(255,255,255,0.2); z-index: 5;`;
-            zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor = 'rgba(255,255,255,0.6)'; });
-            zone.addEventListener('dragleave', () => { zone.style.borderColor = 'rgba(255,255,255,0.2)'; });
-            zone.addEventListener('drop', e => {
-                e.preventDefault(); zone.style.borderColor = 'rgba(255,255,255,0.2)';
-                if (draggedTeam !== teamNum) return;
-                const targetPos = parseInt(pos); if (targetPos === draggedPlayer.position) return;
-                const targetPlayer = positionPlayers[teamNum].find(p => p.position === targetPos);
-                const sourcePos = draggedPlayer.position;
-                draggedPlayer.position = targetPos;
-                if (targetPlayer) targetPlayer.position = sourcePos;
-                savePositions(teamNum); renderPositions();
+            zone.className = 'pos-zone'; zone.dataset.team = teamNum; zone.dataset.position = pos;
+            zone.style.cssText = `position: absolute; left: ${coords.left}; top: ${coords.top}; transform: translate(-50%, -50%); width: 52px; height: 52px; border-radius: 50%; border: 2px dashed rgba(255,255,255,0.2); z-index: 5; pointer-events: auto;`;
+            zone.addEventListener('click', () => {
+                if (selectedChip && selectedChip.team === teamNum) swapPositions(teamNum, selectedChip.player, parseInt(pos));
             });
             container.appendChild(zone);
         });
+        positionPlayers[teamNum].forEach(p => {
+            const pos = posMap[p.position]; if (!pos) return;
+            const selected = selectedChip && selectedChip.player.id === p.id;
+            const el = document.createElement('div');
+            el.style.cssText = `position: absolute; left: ${pos.left}; top: ${pos.top}; transform: translate(-50%, -50%); background: ${color}; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: white; text-align: center; cursor: grab; box-shadow: ${selected ? '0 0 0 3px #fbbf24,' : ''} 0 2px 8px rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.3); user-select: none; z-index: 10; touch-action: none; pointer-events: auto;`;
+            el.textContent = p.name.split(' ')[0];
+            el.addEventListener('pointerdown', e => startPositionDrag(e, el, p, teamNum));
+            container.appendChild(el);
+        });
+    }
+
+    function nearestZone(teamNum, x, y) {
+        let best = null, bestDist = 45;
+        document.querySelectorAll(`.pos-zone[data-team="${teamNum}"]`).forEach(zone => {
+            const r = zone.getBoundingClientRect();
+            const dist = Math.hypot(x - (r.left + r.width / 2), y - (r.top + r.height / 2));
+            if (dist < bestDist) { best = zone; bestDist = dist; }
+        });
+        return best;
+    }
+
+    function startPositionDrag(e, el, player, teamNum) {
+        e.preventDefault();
+        try { el.setPointerCapture(e.pointerId); } catch (err) { /* pointeur déjà relâché */ }
+        const area = el.parentElement.getBoundingClientRect();
+        const startX = e.clientX, startY = e.clientY;
+        let moved = false, target = null;
+
+        el.onpointermove = ev => {
+            if (!moved && Math.hypot(ev.clientX - startX, ev.clientY - startY) < 6) return;
+            moved = true;
+            el.style.cursor = 'grabbing'; el.style.zIndex = 20;
+            el.style.left = `${ev.clientX - area.left}px`;
+            el.style.top  = `${ev.clientY - area.top}px`;
+            if (target) target.style.borderColor = 'rgba(255,255,255,0.2)';
+            target = nearestZone(teamNum, ev.clientX, ev.clientY);
+            if (target) target.style.borderColor = 'rgba(255,255,255,0.8)';
+        };
+        el.onpointerup = () => {
+            el.onpointermove = el.onpointerup = el.onpointercancel = null;
+            if (moved) {
+                selectedChip = null;
+                if (target) swapPositions(teamNum, player, parseInt(target.dataset.position));
+                else renderPositions(); // lâché hors d'un poste : retour à sa place
+                return;
+            }
+            // Simple toucher / clic : sélection puis échange avec le 2e joueur touché
+            if (selectedChip && selectedChip.team === teamNum && selectedChip.player.id !== player.id) {
+                swapPositions(teamNum, selectedChip.player, player.position);
+            } else {
+                selectedChip = selectedChip && selectedChip.player.id === player.id ? null : { team: teamNum, player };
+                renderPositions();
+            }
+        };
+        el.onpointercancel = () => { el.onpointermove = el.onpointerup = el.onpointercancel = null; renderPositions(); };
+    }
+
+    function swapPositions(teamNum, player, targetPos) {
+        selectedChip = null;
+        if (targetPos !== player.position) {
+            const targetPlayer = positionPlayers[teamNum].find(p => p.position === targetPos);
+            if (targetPlayer) targetPlayer.position = player.position;
+            player.position = targetPos;
+            savePositions(teamNum);
+        }
+        renderPositions();
     }
 
     function savePositions(teamNum) {
