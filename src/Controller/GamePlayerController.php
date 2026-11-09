@@ -61,6 +61,43 @@ final class GamePlayerController extends AbstractController
             'player_in_id'  => $playerIn->getId(),
         ]);
     }
+    #[Route('/game/{gameId}/player/{playerId}/rename', name: 'app_game_player_rename', methods: ['POST'])]
+    public function renamePlayer(int $gameId, int $playerId, Request $request, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        $name = trim((string) ($data['name'] ?? ''));
+
+        if ($name === '' || mb_strlen($name) > 255) {
+            return new JsonResponse(['error' => 'Nom invalide'], 400);
+        }
+
+        $game   = $entityManager->getRepository(Game::class)->find($gameId);
+        $player = $entityManager->getRepository(Player::class)->find($playerId);
+
+        if (!$game || !$player) {
+            return new JsonResponse(['error' => 'Game or Player not found'], 404);
+        }
+
+        // Le joueur doit faire partie de ce match
+        $gamePlayer = $entityManager->getRepository(GamePlayer::class)->findOneBy([
+            'game'   => $game,
+            'player' => $player,
+        ]);
+
+        if (!$gamePlayer) {
+            return new JsonResponse(['error' => 'Player not in this game'], 404);
+        }
+
+        $player->setName($name);
+        $entityManager->flush();
+
+        return new JsonResponse([
+            'message'   => 'Joueur renommé',
+            'player_id' => $player->getId(),
+            'name'      => $player->getName(),
+        ]);
+    }
+
     #[Route('/game/{gameId}/positions', name: 'app_game_positions', methods: ['POST'])]
     public function updatePositions(int $gameId, Request $request, EntityManagerInterface $entityManager): JsonResponse
 {

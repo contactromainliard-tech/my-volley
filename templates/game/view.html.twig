@@ -745,9 +745,41 @@
                 Inclure les fautes nominatives
             </label>
             <a id="pdf-link-menu" href="/game/{{ game.id }}/pdf?spoil=1" target="_blank" style="display: block; padding: 14px; border-radius: 14px; background: rgba(167,139,250,0.15); border: 1px solid rgba(167,139,250,0.3); color: #a78bfa; font-size: 14px; font-weight: 600; text-decoration: none; text-align: center;">📄 Télécharger le PDF</a>
+            <button class="modal-btn" onclick="openRename()">✏️ Modifier les noms des joueurs</button>
             <button onclick="endMatch()" style="padding: 14px; border-radius: 14px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #f87171; font-size: 14px; font-weight: 600; cursor: pointer;">🏁 Terminer le match</button>
             <button onclick="closeMenu()" style="padding: 11px; border-radius: 12px; border: none; background: rgba(255,255,255,0.03); color: #64748b; font-size: 13px; cursor: pointer;">Fermer</button>
         </div>
+    </div>
+</div>
+
+
+{# ── MODAL RENOMMER JOUEUR ── #}
+<div id="modal-rename" class="modal-backdrop hidden">
+    <div class="modal-card">
+        <h2 style="font-size: 17px; font-weight: 700; text-align: center; margin-bottom: 20px;" id="rename-title">Modifier un nom</h2>
+
+        <div id="rename-step-team">
+            <p style="font-size: 13px; color: #64748b; text-align: center; margin-bottom: 12px;">Quelle équipe ?</p>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button class="modal-btn" style="color: #f87171;" onclick="renameSelectTeam(1)">{{ team1.name }}</button>
+                <button class="modal-btn" style="color: #60a5fa;" onclick="renameSelectTeam(2)">{{ team2.name }}</button>
+            </div>
+        </div>
+
+        <div id="rename-step-player" class="hidden">
+            <p style="font-size: 13px; color: #64748b; text-align: center; margin-bottom: 12px;">Quel joueur ?</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;" id="rename-players-list"></div>
+        </div>
+
+        <div id="rename-step-input" class="hidden">
+            <p style="font-size: 13px; color: #64748b; text-align: center; margin-bottom: 12px;">Nouveau nom</p>
+            <input type="text" id="rename-input" maxlength="255" autocomplete="off"
+                   style="width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: #e2e8f0; font-size: 15px; outline: none;">
+            <p id="rename-error" class="hidden" style="font-size: 12px; color: #f87171; margin-top: 8px; text-align: center;"></p>
+            <button class="modal-btn" style="margin-top: 12px; color: #a78bfa; border-color: rgba(167,139,250,0.3); background: rgba(167,139,250,0.15);" onclick="submitRename()">Enregistrer</button>
+        </div>
+
+        <button class="modal-btn-cancel" onclick="closeRename()">Annuler</button>
     </div>
 </div>
 
@@ -760,17 +792,17 @@
     let serviceTeam = {{ game.serviceTeam ? game.serviceTeam.id : 'null' }};
 
     let courtPlayers = {
-        1: [ {% for gp in team1.gamePlayers %}{% if gp.isOnCourt %}{ id: {{ gp.player.id }}, name: "{{ gp.player.name }}" },{% endif %}{% endfor %} ],
-        2: [ {% for gp in team2.gamePlayers %}{% if gp.isOnCourt %}{ id: {{ gp.player.id }}, name: "{{ gp.player.name }}" },{% endif %}{% endfor %} ]
+        1: [ {% for gp in team1.gamePlayers %}{% if gp.isOnCourt %}{ id: {{ gp.player.id }}, name: "{{ gp.player.name|e('js') }}" },{% endif %}{% endfor %} ],
+        2: [ {% for gp in team2.gamePlayers %}{% if gp.isOnCourt %}{ id: {{ gp.player.id }}, name: "{{ gp.player.name|e('js') }}" },{% endif %}{% endfor %} ]
     };
     let benchPlayers = {
-        1: [ {% for gp in team1.gamePlayers %}{% if not gp.isOnCourt %}{ id: {{ gp.player.id }}, name: "{{ gp.player.name }}" },{% endif %}{% endfor %} ],
-        2: [ {% for gp in team2.gamePlayers %}{% if not gp.isOnCourt %}{ id: {{ gp.player.id }}, name: "{{ gp.player.name }}" },{% endif %}{% endfor %} ]
+        1: [ {% for gp in team1.gamePlayers %}{% if not gp.isOnCourt %}{ id: {{ gp.player.id }}, name: "{{ gp.player.name|e('js') }}" },{% endif %}{% endfor %} ],
+        2: [ {% for gp in team2.gamePlayers %}{% if not gp.isOnCourt %}{ id: {{ gp.player.id }}, name: "{{ gp.player.name|e('js') }}" },{% endif %}{% endfor %} ]
     };
 
     let positionPlayers = {
-        1: [ {% for gp in team1.gamePlayers %}{% if gp.isOnCourt and gp.position is not null %}{ id: {{ gp.player.id }}, name: "{{ gp.player.name }}", position: {{ gp.position }} },{% endif %}{% endfor %} ],
-        2: [ {% for gp in team2.gamePlayers %}{% if gp.isOnCourt and gp.position is not null %}{ id: {{ gp.player.id }}, name: "{{ gp.player.name }}", position: {{ gp.position }} },{% endif %}{% endfor %} ]
+        1: [ {% for gp in team1.gamePlayers %}{% if gp.isOnCourt and gp.position is not null %}{ id: {{ gp.player.id }}, name: "{{ gp.player.name|e('js') }}", position: {{ gp.position }} },{% endif %}{% endfor %} ],
+        2: [ {% for gp in team2.gamePlayers %}{% if gp.isOnCourt and gp.position is not null %}{ id: {{ gp.player.id }}, name: "{{ gp.player.name|e('js') }}", position: {{ gp.position }} },{% endif %}{% endfor %} ]
     };
 
     let currentTeam = null, currentType = null, currentServer = null, subTeam = null, subPlayerOut = null, subAction = null, posTeam = null, posPlayer1 = null;
@@ -1174,6 +1206,68 @@
 
     function openMenu() { document.getElementById('modal-menu').classList.remove('hidden'); }
     function closeMenu() { document.getElementById('modal-menu').classList.add('hidden'); }
+
+    let renameTeam = null, renamePlayer = null;
+
+    function openRename() {
+        renameTeam = null; renamePlayer = null;
+        closeMenu();
+        document.getElementById('rename-step-team').classList.remove('hidden');
+        document.getElementById('rename-step-player').classList.add('hidden');
+        document.getElementById('rename-step-input').classList.add('hidden');
+        document.getElementById('rename-title').textContent = 'Modifier un nom';
+        document.getElementById('modal-rename').classList.remove('hidden');
+    }
+
+    function closeRename() { document.getElementById('modal-rename').classList.add('hidden'); }
+
+    function renameSelectTeam(teamNumber) {
+        renameTeam = teamNumber;
+        const list = document.getElementById('rename-players-list'); list.innerHTML = '';
+        [...courtPlayers[teamNumber], ...benchPlayers[teamNumber]].forEach(p => {
+            const btn = document.createElement('button');
+            btn.className = 'player-btn'; btn.textContent = p.name;
+            btn.onclick = () => renameSelectPlayer(p); list.appendChild(btn);
+        });
+        document.getElementById('rename-step-team').classList.add('hidden');
+        document.getElementById('rename-step-player').classList.remove('hidden');
+        document.getElementById('rename-title').textContent = 'Joueur à renommer';
+    }
+
+    function renameSelectPlayer(player) {
+        renamePlayer = player;
+        const input = document.getElementById('rename-input');
+        input.value = player.name;
+        document.getElementById('rename-error').classList.add('hidden');
+        document.getElementById('rename-step-player').classList.add('hidden');
+        document.getElementById('rename-step-input').classList.remove('hidden');
+        document.getElementById('rename-title').textContent = 'Modifier un nom';
+        input.focus(); input.select();
+    }
+
+    function submitRename() {
+        const name = document.getElementById('rename-input').value.trim();
+        const error = document.getElementById('rename-error');
+        if (!name) {
+            error.textContent = 'Le nom ne peut pas être vide';
+            error.classList.remove('hidden');
+            return;
+        }
+        fetch(`/game/${gameId}/player/${renamePlayer.id}/rename`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name })
+        }).then(r => r.ok ? r.json() : Promise.reject()).then(data => {
+            // Le même joueur peut apparaître dans plusieurs listes
+            [courtPlayers, benchPlayers, positionPlayers].forEach(lists => {
+                [1, 2].forEach(t => lists[t].forEach(p => { if (p.id === data.player_id) p.name = data.name; }));
+            });
+            closeRename();
+        }).catch(() => {
+            error.textContent = 'Erreur lors de l\'enregistrement';
+            error.classList.remove('hidden');
+        });
+    }
+
+    document.getElementById('rename-input').addEventListener('keydown', e => { if (e.key === 'Enter') submitRename(); });
 
     function endMatch() {
         if (confirm('Terminer le match définitivement ?')) {
