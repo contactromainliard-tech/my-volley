@@ -1424,8 +1424,11 @@
         });
     }
 
+    // Match terminé : on rouvre la fin de match (PDF, set supplémentaire, accueil)
+    {% if game.status == 'finished' %}
+    openEndGame('{{ (game.winnerTeam ? game.winnerTeam.name : '-')|e('js') }}', {{ setsTeam1 }}, {{ setsTeam2 }});
     // Rechargement de la page entre deux sets : la composition n'a pas encore été faite
-    {% if currentManche.number > 1 and currentManche.points|filter(p => not p.isCancelled)|length == 0 %}
+    {% elseif currentManche.number > 1 and currentManche.points|filter(p => not p.isCancelled)|length == 0 %}
     openLineup();
     {% endif %}
 

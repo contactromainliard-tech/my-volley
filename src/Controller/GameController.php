@@ -185,6 +185,8 @@ final class GameController extends AbstractController
                 break;
             }
         }
+        // Match terminé : plus de set en cours, on affiche le dernier set joué
+        $currentManche ??= $game->getManches()->last() ?: null;
 
        return $this->render('game/view.html.twig', [
         'game'          => $game,
