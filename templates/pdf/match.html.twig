@@ -205,11 +205,12 @@
                     {% set cumul2 = 0 %}
                     {% set lastServer = null %}
 {% for point in manchePoints %}
-    {% if point.server and point.server.name != lastServer %}
+    {# Comparaison par joueur (et non par nom) : deux serveurs homonymes restent distincts #}
+    {% if point.server and point.server.id != lastServer %}
         <span style="display: inline-block; background: rgba(255,255,255,0.15); color: #333; font-size: 7px; font-weight: bold; padding: 2px 5px; border-radius: 3px; margin-right: 3px; vertical-align: top; margin-top: 4px;">
             [S] {{ point.server.name }}
         </span>
-        {% set lastServer = point.server.name %}
+        {% set lastServer = point.server.id %}
     {% endif %}
     {% if point.team.id == teams[0].id %}
         {% set cumul1 = cumul1 + 1 %}

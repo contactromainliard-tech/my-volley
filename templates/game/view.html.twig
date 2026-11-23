@@ -1374,8 +1374,8 @@
     function renderLineup(teamNum) {
         lineupTeam = teamNum;
         const players = lineupData[teamNum === 1 ? team1Id : team2Id] ?? [];
-        // Équipe sans 6 joueurs nommés (ex. adversaire non renseigné) : rien à composer
-        if (players.length < 6) { keepLineup(); return; }
+        // Équipe sans 6 joueurs nommés (ex. adversaire non renseigné, joueurs « IC1 »…) : rien à composer
+        if (players.length < 6 || players.every(p => /^IC\d+$/.test(p.name))) { keepLineup(); return; }
         const teamLabel = document.getElementById('lineup-team');
         teamLabel.textContent = teamNum === 1 ? '{{ team1.name|e('js') }}' : '{{ team2.name|e('js') }}';
         teamLabel.style.color = teamNum === 1 ? '#f87171' : '#60a5fa';

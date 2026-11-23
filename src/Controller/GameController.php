@@ -49,7 +49,7 @@ final class GameController extends AbstractController
 
         // Création des joueurs pour chaque équipe
 
-        $players1 = $request->request->all('team1_players');
+        $players1 = $this->playerNames($request->request->all('team1_players'));
         foreach ($players1 as $index => $playerName) {
             $player = new Player();
             $player->setName($playerName);
@@ -64,7 +64,7 @@ final class GameController extends AbstractController
             $entityManager->persist($gamePlayer);
         }
 
-        $players2 = $request->request->all('team2_players');
+        $players2 = $this->playerNames($request->request->all('team2_players'));
         foreach ($players2 as $index => $playerName) {
             $player = new Player();
             $player->setName($playerName);
@@ -93,6 +93,28 @@ final class GameController extends AbstractController
 
         return $this->redirectToRoute('app_game_view', ['id' => $game->getId()]);
     }
+
+    /**
+     * Les noms restent facultatifs : un joueur sans nom devient « IC » + son numéro,
+     * et l'équipe est complétée à 6 pour que chaque serveur reste identifiable
+     *
+     * @return string[]
+     */
+    private function playerNames(array $names): array
+    {
+        $names = array_values(array_map(fn($name) => trim((string) $name), $names));
+        foreach ($names as $index => $name) {
+            if ($name === '') {
+                $names[$index] = 'IC' . ($index + 1);
+            }
+        }
+        for ($index = count($names); $index < 6; $index++) {
+            $names[] = 'IC' . ($index + 1);
+        }
+
+        return $names;
+    }
+
     #[Route('/game/service', name: 'app_game_service', methods: ['POST'])]
     public function setServiceTeam(Request $request, EntityManagerInterface $entityManager)
     {
