@@ -229,10 +229,11 @@
                 <th>Ace (S)</th>
                 <th>Attaque (A)</th>
                 <th>Block (B)</th>
+                <th>Total points</th>
                 <th>Faute (F)</th>
                 <th>F. Service</th>
                 <th>F. Attaque</th>
-                <th>Total</th>
+                <th>Total fautes</th>
             </tr>
         </thead>
         <tbody>
@@ -250,10 +251,11 @@
                         <td class="center">{{ ace }}</td>
                         <td class="center">{{ attack }}</td>
                         <td class="center">{{ block }}</td>
-                        <td class="center">—</td>
-                        <td class="center">—</td>
-                        <td class="center">—</td>
                         <td class="center"><strong>{{ total }}</strong></td>
+                        <td class="center">—</td>
+                        <td class="center">—</td>
+                        <td class="center">—</td>
+                        <td class="center">—</td>
                     </tr>
                     {% endif %}
                 {% endif %}
@@ -264,6 +266,7 @@
 {% if teamFault > 0 or teamFaultService > 0 or teamFaultAttack > 0 %}
 <tr style="background: #fff5f5;">
     <td><em>Équipe adverse</em></td>
+    <td class="center">—</td>
     <td class="center">—</td>
     <td class="center">—</td>
     <td class="center">—</td>
@@ -285,10 +288,11 @@
                 <th>Ace (S)</th>
                 <th>Attaque (A)</th>
                 <th>Block (B)</th>
+                <th>Total points</th>
                 <th>Faute (F)</th>
                 <th>F. Service</th>
                 <th>F. Attaque</th>
-                <th>Total</th>
+                <th>Total fautes</th>
             </tr>
         </thead>
         <tbody>
@@ -306,10 +310,11 @@
                         <td class="center">{{ ace }}</td>
                         <td class="center">{{ attack }}</td>
                         <td class="center">{{ block }}</td>
-                        <td class="center">—</td>
-                        <td class="center">—</td>
-                        <td class="center">—</td>
                         <td class="center"><strong>{{ total }}</strong></td>
+                        <td class="center">—</td>
+                        <td class="center">—</td>
+                        <td class="center">—</td>
+                        <td class="center">—</td>
                     </tr>
                     {% endif %}
                 {% endif %}
@@ -320,6 +325,7 @@
 {% if teamFault > 0 or teamFaultService > 0 or teamFaultAttack > 0 %}
 <tr style="background: #fff5f5;">
     <td><em>Équipe adverse</em></td>
+    <td class="center">—</td>
     <td class="center">—</td>
     <td class="center">—</td>
     <td class="center">—</td>

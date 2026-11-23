@@ -256,10 +256,11 @@
                 <th>Ace (S)</th>
                 <th>Attaque (A)</th>
                 <th>Block (B)</th>
+                <th>Total points</th>
                 <th>Faute (F)</th>
                 <th>F. Service</th>
                 <th>F. Attaque</th>
-                <th>Total</th>
+                <th>Total fautes</th>
             </tr>
         </thead>
         <tbody>
@@ -270,18 +271,23 @@
                     {% set ace    = playerPoints|filter(p => p.type == 'ace')|length %}
                     {% set attack = playerPoints|filter(p => p.type == 'attack')|length %}
                     {% set block  = playerPoints|filter(p => p.type == 'block')|length %}
-                    {% set fault  = playerPoints|filter(p => p.type == 'fault')|length %}
-                    {% set total  = ace + attack + block + fault %}
-                    {% if total > 0 or gp.player.name|trim is not empty %}
+                    {% set fault        = playerPoints|filter(p => p.type == 'fault')|length %}
+                    {% set faultService = playerPoints|filter(p => p.type == 'fault_service')|length %}
+                    {% set faultAttack  = playerPoints|filter(p => p.type == 'fault_attack')|length %}
+                    {# Points gagnés grâce au joueur, et fautes qu'il a commises #}
+                    {% set total       = ace + attack + block %}
+                    {% set totalFaults = fault + faultService + faultAttack %}
+                    {% if total > 0 or totalFaults > 0 or gp.player.name|trim is not empty %}
                     <tr>
                         <td>{{ gp.player.name }}</td>
                         <td class="center">{{ ace }}</td>
                         <td class="center">{{ attack }}</td>
                         <td class="center">{{ block }}</td>
-                        <td class="center">{{ fault }}</td>
-                        <td class="center">—</td>
-                        <td class="center">—</td>
                         <td class="center"><strong>{{ total }}</strong></td>
+                        <td class="center">{{ fault }}</td>
+                        <td class="center">{{ faultService }}</td>
+                        <td class="center">{{ faultAttack }}</td>
+                        <td class="center"><strong style="color: #c0392b;">{{ totalFaults }}</strong></td>
                     </tr>
                     {% endif %}
                 {% endif %}
@@ -292,6 +298,7 @@
 {% if teamFault > 0 or teamFaultService > 0 or teamFaultAttack > 0 %}
 <tr style="background: #fff5f5;">
     <td><em>Équipe adverse</em></td>
+    <td class="center">—</td>
     <td class="center">—</td>
     <td class="center">—</td>
     <td class="center">—</td>
@@ -313,10 +320,11 @@
                 <th>Ace (S)</th>
                 <th>Attaque (A)</th>
                 <th>Block (B)</th>
+                <th>Total points</th>
                 <th>Faute (F)</th>
                 <th>F. Service</th>
                 <th>F. Attaque</th>
-                <th>Total</th>
+                <th>Total fautes</th>
             </tr>
         </thead>
         <tbody>
@@ -327,18 +335,23 @@
                     {% set ace    = playerPoints|filter(p => p.type == 'ace')|length %}
                     {% set attack = playerPoints|filter(p => p.type == 'attack')|length %}
                     {% set block  = playerPoints|filter(p => p.type == 'block')|length %}
-                    {% set fault  = playerPoints|filter(p => p.type == 'fault')|length %}
-                    {% set total  = ace + attack + block + fault %}
-                    {% if total > 0 or gp.player.name|trim is not empty %}
+                    {% set fault        = playerPoints|filter(p => p.type == 'fault')|length %}
+                    {% set faultService = playerPoints|filter(p => p.type == 'fault_service')|length %}
+                    {% set faultAttack  = playerPoints|filter(p => p.type == 'fault_attack')|length %}
+                    {# Points gagnés grâce au joueur, et fautes qu'il a commises #}
+                    {% set total       = ace + attack + block %}
+                    {% set totalFaults = fault + faultService + faultAttack %}
+                    {% if total > 0 or totalFaults > 0 or gp.player.name|trim is not empty %}
                     <tr>
                         <td>{{ gp.player.name }}</td>
                         <td class="center">{{ ace }}</td>
                         <td class="center">{{ attack }}</td>
                         <td class="center">{{ block }}</td>
-                        <td class="center">{{ fault }}</td>
-                        <td class="center">—</td>
-                        <td class="center">—</td>
                         <td class="center"><strong>{{ total }}</strong></td>
+                        <td class="center">{{ fault }}</td>
+                        <td class="center">{{ faultService }}</td>
+                        <td class="center">{{ faultAttack }}</td>
+                        <td class="center"><strong style="color: #c0392b;">{{ totalFaults }}</strong></td>
                     </tr>
                     {% endif %}
                 {% endif %}
@@ -349,6 +362,7 @@
 {% if teamFault > 0 or teamFaultService > 0 or teamFaultAttack > 0 %}
 <tr style="background: #fff5f5;">
     <td><em>Équipe adverse</em></td>
+    <td class="center">—</td>
     <td class="center">—</td>
     <td class="center">—</td>
     <td class="center">—</td>
