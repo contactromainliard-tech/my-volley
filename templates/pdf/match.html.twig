@@ -264,14 +264,15 @@
         </thead>
         <tbody>
             {% for gp in players %}
-                {% if gp.team.id == teams[0].id and gp.isOnCourt %}
+                {# Tous les joueurs du match, y compris ceux sur le banc à la fin #}
+                {% if gp.team.id == teams[0].id %}
                     {% set playerPoints = points|filter(p => p.player and p.player.id == gp.player.id) %}
                     {% set ace    = playerPoints|filter(p => p.type == 'ace')|length %}
                     {% set attack = playerPoints|filter(p => p.type == 'attack')|length %}
                     {% set block  = playerPoints|filter(p => p.type == 'block')|length %}
                     {% set fault  = playerPoints|filter(p => p.type == 'fault')|length %}
                     {% set total  = ace + attack + block + fault %}
-                    {% if total > 0 %}
+                    {% if total > 0 or gp.player.name|trim is not empty %}
                     <tr>
                         <td>{{ gp.player.name }}</td>
                         <td class="center">{{ ace }}</td>
@@ -320,14 +321,15 @@
         </thead>
         <tbody>
             {% for gp in players %}
-                {% if gp.team.id == teams[1].id and gp.isOnCourt %}
+                {# Tous les joueurs du match, y compris ceux sur le banc à la fin #}
+                {% if gp.team.id == teams[1].id %}
                     {% set playerPoints = points|filter(p => p.player and p.player.id == gp.player.id) %}
                     {% set ace    = playerPoints|filter(p => p.type == 'ace')|length %}
                     {% set attack = playerPoints|filter(p => p.type == 'attack')|length %}
                     {% set block  = playerPoints|filter(p => p.type == 'block')|length %}
                     {% set fault  = playerPoints|filter(p => p.type == 'fault')|length %}
                     {% set total  = ace + attack + block + fault %}
-                    {% if total > 0 %}
+                    {% if total > 0 or gp.player.name|trim is not empty %}
                     <tr>
                         <td>{{ gp.player.name }}</td>
                         <td class="center">{{ ace }}</td>
